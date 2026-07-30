@@ -9,18 +9,18 @@ class ColorRepository {
   }
 
   Color mixPaints({
-    required double red,
-    required double green,
-    required double blue,
-    required double white,
+    required double cyan,
+    required double magenta,
+    required double yellow,
     required double black,
+    required double white,
   }) {
     return ColorMixer.mix(
-      redMl: red,
-      greenMl: green,
-      blueMl: blue,
-      whiteMl: white,
+      cyanMl: cyan,
+      magentaMl: magenta,
+      yellowMl: yellow,
       blackMl: black,
+      whiteMl: white,
     );
   }
 

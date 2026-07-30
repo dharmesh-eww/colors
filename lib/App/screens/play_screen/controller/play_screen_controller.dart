@@ -8,10 +8,10 @@ import '../repository/play_screen_repository.dart';
 class PlayScreenController extends StateController<PlayScreenBinding> {
   final PlayScreenRepository _repository = PlayScreenRepository();
 
-  Color _targetColor = const Color(0xFFE6BE28);
+  Color _targetColor = const Color(0xFF008080); // Teal default
   Color _mixedColor = const Color(0xFFFFFFFF);
 
-  PaintType _selectedType = PaintType.red;
+  PaintType _selectedType = PaintType.cyan;
   double _accuracy = 0.0;
   bool _isMixed = false;
   bool _isCompleted = false;
@@ -22,35 +22,35 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
 
   PlayScreenController() {
     _bottles = {
-      PaintType.red: PaintBottle(
-        type: PaintType.red,
-        name: 'Red',
-        color: const Color(0xFFFF7675),
-        emoji: '🔴',
+      PaintType.cyan: PaintBottle(
+        type: PaintType.cyan,
+        name: 'Cyan',
+        color: const Color(0xFF00FFFF),
+        hexCode: '#00FFFF',
       ),
-      PaintType.green: PaintBottle(
-        type: PaintType.green,
-        name: 'Green',
-        color: const Color(0xFF55E6C1),
-        emoji: '🟢',
+      PaintType.magenta: PaintBottle(
+        type: PaintType.magenta,
+        name: 'Magenta',
+        color: const Color(0xFFFF00FF),
+        hexCode: '#FF00FF',
       ),
-      PaintType.blue: PaintBottle(
-        type: PaintType.blue,
-        name: 'Blue',
-        color: const Color(0xFF74B9FF),
-        emoji: '🔵',
-      ),
-      PaintType.white: PaintBottle(
-        type: PaintType.white,
-        name: 'White',
-        color: const Color(0xFFF5F6FA),
-        emoji: '⚪',
+      PaintType.yellow: PaintBottle(
+        type: PaintType.yellow,
+        name: 'Yellow',
+        color: const Color(0xFFFFFF00),
+        hexCode: '#FFFF00',
       ),
       PaintType.black: PaintBottle(
         type: PaintType.black,
         name: 'Black',
-        color: const Color(0xFF2D3436),
-        emoji: '⬛',
+        color: const Color(0xFF000000),
+        hexCode: '#000000',
+      ),
+      PaintType.white: PaintBottle(
+        type: PaintType.white,
+        name: 'White',
+        color: const Color(0xFFFFFFFF),
+        hexCode: '#FFFFFF',
       ),
     };
   }
@@ -64,6 +64,15 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   bool get isCompleted => _isCompleted;
   List<PaintBottle> get bottles => _bottles.values.toList();
   PaintBottle get selectedBottle => _bottles[_selectedType]!;
+
+  String get targetHex {
+    final r = (targetColor.r * 255).round();
+    final g = (targetColor.g * 255).round();
+    final b = (targetColor.b * 255).round();
+    return '#${r.toRadixString(16).padLeft(2, '0').toUpperCase()}'
+        '${g.toRadixString(16).padLeft(2, '0').toUpperCase()}'
+        '${b.toRadixString(16).padLeft(2, '0').toUpperCase()}';
+  }
 
   @override
   void onInit() {
@@ -98,7 +107,6 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   }
 
   /// Pours paint from the specified [type] bottle into the mixture.
-  /// Updates live mixed color and live accuracy without triggering victory completion during active pouring.
   void pourPaintType(PaintType type, double amountMl) {
     final bottle = _bottles[type];
     if (bottle == null || bottle.availableMl <= 0 || amountMl <= 0) return;
@@ -107,13 +115,13 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
     bottle.pouredMl += pourAmount;
     bottle.availableMl = (100.0 - bottle.pouredMl).clamp(0.0, 100.0);
 
-    // Recalculate mixed color
+    // Recalculate mixed color using CMYK subtractive model
     _mixedColor = _repository.mixPaints(
-      red: _bottles[PaintType.red]!.pouredMl,
-      green: _bottles[PaintType.green]!.pouredMl,
-      blue: _bottles[PaintType.blue]!.pouredMl,
-      white: _bottles[PaintType.white]!.pouredMl,
+      cyan: _bottles[PaintType.cyan]!.pouredMl,
+      magenta: _bottles[PaintType.magenta]!.pouredMl,
+      yellow: _bottles[PaintType.yellow]!.pouredMl,
       black: _bottles[PaintType.black]!.pouredMl,
+      white: _bottles[PaintType.white]!.pouredMl,
     );
 
     _accuracy = _repository.calculateAccuracy(_targetColor, _mixedColor);
@@ -130,7 +138,7 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
       _isCompleted = true;
       flameGame?.triggerVictoryCelebration(_mixedColor);
 
-      Future.delayed(const Duration(milliseconds: 2200), () {
+      Future.delayed(const Duration(milliseconds: 2500), () {
         initNewTarget();
       });
 

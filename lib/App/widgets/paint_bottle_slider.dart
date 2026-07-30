@@ -51,9 +51,14 @@ class PaintBottleSlider extends StatelessWidget {
               ],
             ),
             alignment: Alignment.center,
-            child: Text(
-              bottle.emoji,
-              style: const TextStyle(fontSize: 20),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: bottleColor.withValues(alpha: 0.4),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+              ),
             ),
           ),
           const SizedBox(width: 12),

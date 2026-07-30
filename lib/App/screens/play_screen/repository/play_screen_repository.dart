@@ -9,18 +9,18 @@ class PlayScreenRepository {
   }
 
   Color mixPaints({
-    required double red,
-    required double green,
-    required double blue,
-    required double white,
+    required double cyan,
+    required double magenta,
+    required double yellow,
     required double black,
+    required double white,
   }) {
     return _colorRepository.mixPaints(
-      red: red,
-      green: green,
-      blue: blue,
-      white: white,
+      cyan: cyan,
+      magenta: magenta,
+      yellow: yellow,
       black: black,
+      white: white,
     );
   }
 

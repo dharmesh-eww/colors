@@ -62,9 +62,14 @@ class _ActiveBottleWidgetState extends State<ActiveBottleWidget> {
             children: [
               Row(
                 children: [
-                  Text(
-                    bottle.emoji,
-                    style: const TextStyle(fontSize: 22),
+                  Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: bottle.color,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFB0C8FF), width: 1.5),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Text(

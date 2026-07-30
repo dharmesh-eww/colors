@@ -74,10 +74,13 @@ class HorizontalColorSelector extends StatelessWidget {
                         ),
                       ],
                     ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      bottle.emoji,
-                      style: const TextStyle(fontSize: 14),
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: chipColor,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
