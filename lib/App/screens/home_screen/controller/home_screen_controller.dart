@@ -5,6 +5,6 @@ import '../binding/home_screen_binding.dart';
 
 class HomeScreenController extends StateController<HomeScreenBinding> {
   void playButtonClicked(BuildContext context) {
-    Navigator.pushNamed(context, Routes.playScreen);
+    Navigator.pushNamed(context, Routes.levelSelectionScreen);
   }
 }
