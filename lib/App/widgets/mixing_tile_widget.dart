@@ -50,8 +50,19 @@ class _MixingTileWidgetState extends State<MixingTileWidget>
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Accuracy Badge ──────────────────────────────────────────────
-            _AccuracyBadge(accuracy: widget.accuracy),
+            // ── Accuracy text ───────────────────────────────────────────────
+            Text(
+              'Match ${widget.accuracy.toStringAsFixed(widget.accuracy % 1 == 0 ? 0 : 1)}%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                letterSpacing: 0.8,
+                shadows: [
+                  Shadow(color: Color(0xFF000000), offset: Offset(0, 1), blurRadius: 4),
+                ],
+              ),
+            ),
 
             const SizedBox(height: 14),
 
@@ -98,27 +109,7 @@ class _MixingTileWidgetState extends State<MixingTileWidget>
                     ),
                   ),
 
-                  // "COLOR MIXING VIEW" label at bottom of chamber
-                  Positioned(
-                    bottom: 4,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3B1E08).withValues(alpha: 0.55),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Text(
-                        'COLOR MIXING VIEW',
-                        style: TextStyle(
-                          color: Color(0xFFFFE0B2),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
-                  ),
+
                 ],
               ),
             ),
@@ -129,67 +120,6 @@ class _MixingTileWidgetState extends State<MixingTileWidget>
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Accuracy Badge
-// ──────────────────────────────────────────────────────────────────────────────
-class _AccuracyBadge extends StatelessWidget {
-  final double accuracy;
-  const _AccuracyBadge({required this.accuracy});
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isGreat = accuracy >= 95.0;
-    final bool isGood = accuracy >= 70.0;
-
-    final List<Color> gradient = isGreat
-        ? const [Color(0xFF00C853), Color(0xFF007B33)]
-        : (isGood
-            ? const [Color(0xFFFF8F00), Color(0xFFE65100)]
-            : const [Color(0xFF5C6BC0), Color(0xFF283593)]);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
-        boxShadow: [
-          BoxShadow(
-            color: gradient[0].withValues(alpha: 0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.colorize_rounded, color: Colors.white, size: 16),
-          const SizedBox(width: 8),
-          Text(
-            'Match ${accuracy.toStringAsFixed(accuracy % 1 == 0 ? 0 : 1)}%',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: 15,
-              letterSpacing: 0.8,
-              shadows: [
-                Shadow(
-                    color: Color(0xFF1A237E),
-                    offset: Offset(0, 1),
-                    blurRadius: 2)
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Glowing circular platform below beaker
