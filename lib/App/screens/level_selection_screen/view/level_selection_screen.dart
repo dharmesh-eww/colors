@@ -564,7 +564,7 @@ class _LevelCard extends StatelessWidget {
                         ),
                       ),
                       Align(
-                        alignment: const Alignment(0.0, 0.65),
+                        alignment: const Alignment(0.0, 0.8),
                         child: _buildStatusFooter(isCompleted, isPlaying, isLocked),
                       ),
                     ],
@@ -606,7 +606,7 @@ class _LevelCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 0.5),
             child: Icon(
               Icons.star_rounded,
-              size: 13,
+              size: 15,
               color: active ? const Color(0xFFFFD700) : const Color(0x44FFFFFF),
             ),
           );
@@ -855,30 +855,6 @@ class _HeroPotionBottlePainter extends CustomPainter {
         ..strokeWidth = 1.8,
     );
 
-    // Glass Highlights (Left edge strips)
-    final double hlX = bottleX + bottleW * 0.12;
-    final highlightRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(hlX, bodyY + 6, 3.5, bodyH * 0.55),
-      const Radius.circular(3),
-    );
-    canvas.drawRRect(
-      highlightRect,
-      Paint()
-        ..color = Colors.white.withValues(alpha: isLocked ? 0.3 : 0.55)
-        ..style = PaintingStyle.fill,
-    );
-
-    // Secondary highlight
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(hlX + 5, bodyY + 8, 1.8, bodyH * 0.25),
-        const Radius.circular(2),
-      ),
-      Paint()
-        ..color = Colors.white.withValues(alpha: isLocked ? 0.15 : 0.3)
-        ..style = PaintingStyle.fill,
-    );
-
     // Label Area
     final double labelY = bodyY + bodyH * 0.28;
     final double labelH = bodyH * 0.34;
@@ -897,7 +873,7 @@ class _HeroPotionBottlePainter extends CustomPainter {
       Paint()
         ..color = Colors.white.withValues(alpha: isLocked ? 0.25 : 0.4)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.8,
+        ..strokeWidth = 0.5,
     );
 
     // Metallic Keyhole Padlock Icon for Locked State
