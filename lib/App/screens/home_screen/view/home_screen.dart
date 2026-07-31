@@ -91,208 +91,215 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
         children: [
           // ── Layer 1: Warm Wood Background ──────────────────────────────
           Positioned.fill(child: GameWidget(game: _bgGame)),
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 28),
+          Positioned.fill(
+            child: SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 28),
 
-                // ── Logo + Title ──────────────────────────────────────────
-                _LogoBadge(shimmerAnimation: _shimmerAnimation),
+                  // ── Logo + Title ──────────────────────────────────────────
+                  _LogoBadge(shimmerAnimation: _shimmerAnimation),
 
-                const SizedBox(height: 14),
+                  const SizedBox(height: 14),
 
-                // ── Title ─────────────────────────────────────────────────
-                const Text(
-                  'Color Craft',
-                  style: TextStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFFF5DEB3),
-                    letterSpacing: 2.0,
-                    shadows: [
-                      Shadow(color: Color(0xFF3B1E08), offset: Offset(0, 3), blurRadius: 8),
-                      Shadow(color: Color(0xFFFFD700), offset: Offset(0, -1), blurRadius: 6),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // ── Subtitle badge ────────────────────────────────────────
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFD4A055), Color(0xFFB87333)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xFFFFD700).withValues(alpha: 0.6),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: const Text(
-                    'Mix · Match · Paint Puzzle',
+                  // ── Title ─────────────────────────────────────────────────
+                  const Text(
+                    'Color Craft',
                     style: TextStyle(
-                      color: Color(0xFFFFF8E1),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
+                      fontSize: 42,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFFF5DEB3),
+                      letterSpacing: 2.0,
+                      shadows: [
+                        Shadow(color: Color(0xFF3B1E08), offset: Offset(0, 3), blurRadius: 8),
+                        Shadow(color: Color(0xFFFFD700), offset: Offset(0, -1), blurRadius: 6),
+                      ],
                     ),
                   ),
-                ),
 
-                const Spacer(),
+                  const SizedBox(height: 8),
 
-                // ── Central Mixing Station Preview ────────────────────────
-                _MixingStationPreview(floatAnimation: _floatAnimation),
-
-                const Spacer(),
-
-                // ── PLAY Button ───────────────────────────────────────────
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: GestureDetector(
-                    onTap: () => widget.controller.playButtonClicked(context),
-                    child: Container(
-                      width: 210,
-                      height: 66,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFFD700), Color(0xFFD4A055)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                  // ── Subtitle badge ────────────────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFD4A055), Color(0xFFB87333)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFFFFD700).withValues(alpha: 0.6),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
                         ),
-                        borderRadius: BorderRadius.circular(33),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFFFD700).withValues(alpha: 0.6),
-                            blurRadius: 24,
-                            spreadRadius: 2,
-                            offset: const Offset(0, 6),
-                          ),
-                          BoxShadow(
-                            color: const Color(0xFF3B1E08).withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF3B1E08).withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.play_arrow_rounded,
-                              size: 30,
-                              color: Color(0xFF3B1E08),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'PLAY',
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF3B1E08),
-                              letterSpacing: 3,
-                              shadows: [
-                                Shadow(
-                                  color: Color(0x33FFFFFF),
-                                  offset: Offset(0, 1),
-                                  blurRadius: 2,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      ],
+                    ),
+                    child: const Text(
+                      'Mix · Match · Paint Puzzle',
+                      style: TextStyle(
+                        color: Color(0xFFFFF8E1),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
                       ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 20),
+                  const Spacer(),
 
-                // ── Mode chips ────────────────────────────────────────────
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildModeChip('Easy', isSelected: true),
-                    const SizedBox(width: 8),
-                    _buildModeChip('Medium'),
-                    const SizedBox(width: 8),
-                    _buildModeChip('Hard'),
-                    const SizedBox(width: 8),
-                    _buildModeChip('2 Min ⏱'),
-                  ],
-                ),
+                  // ── Central Mixing Station Preview ────────────────────────
+                  _MixingStationPreview(floatAnimation: _floatAnimation),
 
-                const Spacer(),
-                const SizedBox(height: 14),
-              ],
+                  const Spacer(),
+
+                  // ── PLAY Button ───────────────────────────────────────────
+                  _PlayButtonWidget(
+                    onTap: () => widget.controller.playButtonClicked(context),
+                    pulseAnimation: _scaleAnimation,
+                  ),
+
+                  const Spacer(),
+                  const SizedBox(height: 14),
+                ],
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildModeChip(String label, {bool isSelected = false}) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        gradient: isSelected
-            ? const LinearGradient(
-                colors: [Color(0xFFD4A055), Color(0xFF8B5E3C)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
-        color: isSelected ? null : const Color(0xFF3B1E08).withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isSelected
-              ? const Color(0xFFFFD700)
-              : const Color(0xFFD4A055).withValues(alpha: 0.4),
-          width: isSelected ? 1.8 : 1.0,
-        ),
-        boxShadow: isSelected
-            ? [
+// ──────────────────────────────────────────────────────────────────────────────
+// Theme-Matched 3D Gold & Wood PLAY Button
+// ──────────────────────────────────────────────────────────────────────────────
+class _PlayButtonWidget extends StatefulWidget {
+  final VoidCallback onTap;
+  final Animation<double> pulseAnimation;
+
+  const _PlayButtonWidget({required this.onTap, required this.pulseAnimation});
+
+  @override
+  State<_PlayButtonWidget> createState() => _PlayButtonWidgetState();
+}
+
+class _PlayButtonWidgetState extends State<_PlayButtonWidget> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: widget.pulseAnimation,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) => setState(() => _isPressed = false),
+        onTapCancel: () => setState(() => _isPressed = false),
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedScale(
+          scale: _isPressed ? 0.92 : 1.0,
+          duration: const Duration(milliseconds: 120),
+          child: Container(
+            width: 215,
+            height: 68,
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFFFFF5DF), // Champagne top highlight
+                  Color(0xFFF5DEB3), // Cream gold
+                  Color(0xFFD4A055), // Polished brass
+                  Color(0xFFB87333), // Copper edge
+                  Color(0xFF6D4C2A), // Warm wood base
+                ],
+                stops: [0.0, 0.25, 0.55, 0.82, 1.0],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(34),
+              border: Border.all(color: const Color(0xFFFFE082).withValues(alpha: 0.9), width: 2.5),
+              boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: const Color(0xFFFFD700).withValues(alpha: 0.5),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 4),
                 ),
-              ]
-            : null,
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isSelected
-              ? const Color(0xFFFFF8E1)
-              : const Color(0xFFF5DEB3).withValues(alpha: 0.75),
-          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-          fontSize: 11,
-          letterSpacing: 0.3,
+                BoxShadow(
+                  color: const Color(0xFF3B1E08).withValues(alpha: 0.55),
+                  blurRadius: 10,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF5DEB3), Color(0xFFE8C898), Color(0xFFD4A055)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: const Color(0xFF8D6228).withValues(alpha: 0.4),
+                  width: 1.2,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Play Icon Circle Badge
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFFFFD700).withValues(alpha: 0.8),
+                        width: 1.8,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.play_arrow_rounded, size: 28, color: Color(0xFFFFD700)),
+                  ),
+                  const SizedBox(width: 12),
+                  // PLAY Text
+                  const Text(
+                    'PLAY',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF3B1E08),
+                      letterSpacing: 3.5,
+                      shadows: [
+                        Shadow(color: Color(0x77FFFFFF), offset: Offset(0, 1), blurRadius: 2),
+                        Shadow(color: Color(0x33000000), offset: Offset(0, 2), blurRadius: 4),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -482,15 +489,15 @@ class _MixingStationPreview extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _colorDot(const Color(0xFF00FFFF), 'C'),
+                  _colorDot(const Color(0xFF4DD0E1)),
                   const SizedBox(width: 8),
-                  _colorDot(const Color(0xFFFF00FF), 'M'),
+                  _colorDot(const Color(0xFFFF80AB)),
                   const SizedBox(width: 8),
-                  _colorDot(const Color(0xFFFFFF00), 'Y'),
+                  _colorDot(const Color(0xFFFFF176)),
                   const SizedBox(width: 8),
-                  _colorDot(const Color(0xFF1A1A1A), 'K'),
+                  _colorDot(const Color(0xFFB0BEC5)),
                   const SizedBox(width: 8),
-                  _colorDot(const Color(0xFFF0F0F0), 'W'),
+                  _colorDot(const Color(0xFFFFFFFF)),
                 ],
               ),
             ],
@@ -500,8 +507,8 @@ class _MixingStationPreview extends StatelessWidget {
     );
   }
 
-  Widget _colorDot(Color color, String label) {
-    final bool isDark = color.computeLuminance() < 0.12 || color == const Color(0xFF1A1A1A);
+  Widget _colorDot(Color color) {
+    final bool isDark = color.computeLuminance() < 0.12;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -519,16 +526,6 @@ class _MixingStationPreview extends StatelessWidget {
                 spreadRadius: 1,
               ),
             ],
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFFF5DEB3),
-            fontWeight: FontWeight.w900,
-            fontSize: 11,
-            letterSpacing: 0.5,
           ),
         ),
       ],
