@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
@@ -537,7 +538,7 @@ class _LevelCard extends StatelessWidget {
         final double textSize = fontSize + 6.0;
         final double totalHeight = constraints.hasBoundedHeight ? constraints.maxHeight : 78.0;
         final double remainingHeight = (totalHeight - textSize).clamp(0.0, totalHeight);
-        final double bottleWidth = remainingHeight * (70.0 / 60.0);
+        final double bottleWidth = remainingHeight * (64.0 / 72.0);
 
         return GestureDetector(
           onTap: onTap,
@@ -563,7 +564,7 @@ class _LevelCard extends StatelessWidget {
                         ),
                       ),
                       Align(
-                        alignment: const Alignment(0.0, 0.8),
+                        alignment: const Alignment(0.0, 0.65),
                         child: _buildStatusFooter(isCompleted, isPlaying, isLocked),
                       ),
                     ],
@@ -617,7 +618,7 @@ class _LevelCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CustomPainter: Bulbous Potion Flask + Sliced Wooden Log Pedestal
+// CustomPainter: Rectangular Ink Bottle + Sliced Wooden Log Pedestal Stand
 // ─────────────────────────────────────────────────────────────────────────────
 class _HeroPotionBottlePainter extends CustomPainter {
   final Color targetColor;
@@ -639,15 +640,48 @@ class _HeroPotionBottlePainter extends CustomPainter {
     final double w = size.width;
     final double h = size.height;
 
-    // ── 1. Sliced Wooden Log Disk Pedestal (Underneath Bottle) ────────────
-    final pedestalY = h * 0.54;
-    final pedestalW = w * 0.84;
-    final pedestalH = h * 0.36;
-    final pedestalX = (w - pedestalW) / 2;
+    // ── 1. Bottle Geometry & Coordinates ───────────────────────────────
+    final double bottleH = h * 0.60;
+    final double bottleW = w * 0.50;
+    final double bottleX = (w - bottleW) / 2;
+
+    // Cork Stopper
+    final double corkH = bottleH * 0.12;
+    final double corkW = bottleW * 0.36;
+    final double corkX = (w - corkW) / 2;
+    final double corkY = h * 0.10;
+
+    // Bottle Neck
+    final double neckH = bottleH * 0.16;
+    final double neckW = bottleW * 0.38;
+    final double neckX = (w - neckW) / 2;
+    final double neckY = corkY + corkH;
+
+    // Bottle Body
+    final double bodyY = neckY + neckH;
+    final double bodyH = bottleH - (corkH + neckH);
+
+    // ── 0. Glow Aura for active playing level ───────────────────────────
+    if (isPlaying) {
+      final double glowRadius = w * 0.55 * glowValue;
+      canvas.drawCircle(
+        Offset(w * 0.5, bodyY + bodyH * 0.5),
+        glowRadius,
+        Paint()
+          ..color = targetColor.withValues(alpha: 0.35 * glowValue)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10.0 * glowValue),
+      );
+    }
+
+    // ── 1. Sliced Wooden Log Disk Pedestal Stand (Underneath Bottle) ──────
+    final double pedestalY = h * 0.6;
+    final double pedestalH = h * 0.32;
+    final double pedestalW = w * 0.90;
+    final double pedestalX = (w - pedestalW) / 2;
 
     // Drop shadow under wooden pedestal
     canvas.drawOval(
-      Rect.fromLTWH(pedestalX, pedestalY + pedestalH * 0.4, pedestalW, pedestalH * 0.6),
+      Rect.fromLTWH(pedestalX, pedestalY + pedestalH * 0.4, pedestalW, pedestalH * 0.5),
       Paint()
         ..color = Colors.black.withValues(alpha: 0.35)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
@@ -680,153 +714,62 @@ class _HeroPotionBottlePainter extends CustomPainter {
         ..strokeWidth = 1.0,
     );
 
-    // ── 2. Bulbous Sphere Potion Bottle ──────────────────────────────────
-    final bottleRadius = w * 0.24;
-    final bottleCenter = Offset(w * 0.5, h * 0.5);
-    final sphereTopY = bottleCenter.dy - bottleRadius;
-
-    // Bottle Neck Part 2: Lower Main Neck Tube (Decreased height)
-    final neckW = w * 0.15;
-    final neckH = h * 0.05;
-    final neckX = (w - neckW) / 2;
-    final neckY = sphereTopY - neckH + 3.0;
-
-    // Bottle Neck Part 1: Upper Glass Lip Collar
-    final lipW = w * 0.20;
-    final lipH = h * 0.03;
-    final lipX = (w - lipW) / 2;
-    final lipY = neckY - lipH + 1.0;
-
-    // Cork Stopper
-    final corkW = w * 0.22;
-    final corkH = h * 0.07;
-    final corkX = (w - corkW) / 2;
-    final corkY = lipY - corkH + 1.0;
-
-    // Draw Cork Stopper
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(corkX, corkY, corkW, corkH),
-        const Radius.circular(2.0),
-      ),
-      Paint()..color = isLocked ? const Color(0xFF757575) : const Color(0xFFD4A055),
+    // ── 2. Bottle Painting ────────────────────────────────────────────────
+    final corkRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(corkX, corkY, corkW, corkH),
+      const Radius.circular(3),
     );
 
-    final glassFillPaint = Paint()
-      ..color = isLocked
-          ? Colors.white.withValues(alpha: 0.1)
-          : Colors.white.withValues(alpha: 0.25);
-
-    final glassStrokePaint = Paint()
-      ..color = isLocked
-          ? Colors.white.withValues(alpha: 0.25)
-          : Colors.white.withValues(alpha: 0.7)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
-
-    // Draw Neck Part 1: Upper Glass Lip Collar
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(lipX, lipY, lipW, lipH), const Radius.circular(1.5)),
-      glassFillPaint,
+      corkRect,
+      Paint()
+        ..color = isLocked ? const Color(0xFF757575) : const Color(0xFFD4A055)
+        ..style = PaintingStyle.fill,
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(lipX, lipY, lipW, lipH), const Radius.circular(1.5)),
-      glassStrokePaint,
-    );
-
-    // Draw Neck Part 2: Lower Main Neck Tube
-    canvas.drawRect(Rect.fromLTWH(neckX, neckY, neckW, neckH), glassFillPaint);
-    canvas.drawRect(Rect.fromLTWH(neckX, neckY, neckW, neckH), glassStrokePaint);
-
-    // Bulbous Sphere Body Clip
-    canvas.save();
-    final bottlePath = Path()..addOval(Rect.fromCircle(center: bottleCenter, radius: bottleRadius));
-
-    canvas.clipPath(bottlePath);
-
-    // Glass Background Fill
-    canvas.drawCircle(
-      bottleCenter,
-      bottleRadius,
+      corkRect,
       Paint()
         ..color = isLocked
-            ? Colors.white.withValues(alpha: 0.08)
-            : Colors.white.withValues(alpha: 0.22),
-    );
-
-    // Liquid Fill inside bulbous body (60% filled)
-    if (!isLocked) {
-      final liquidY = bottleCenter.dy - bottleRadius * 0.2;
-      final liquidHeight = bottleRadius * 1.5;
-
-      final liquidPaint = Paint()
-        ..shader =
-            LinearGradient(
-              colors: [targetColor, targetColor.withValues(alpha: 0.85)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ).createShader(
-              Rect.fromLTWH(
-                bottleCenter.dx - bottleRadius,
-                liquidY,
-                bottleRadius * 2,
-                liquidHeight,
-              ),
-            );
-
-      canvas.drawRect(
-        Rect.fromLTWH(bottleCenter.dx - bottleRadius, liquidY, bottleRadius * 2, liquidHeight),
-        liquidPaint,
-      );
-
-      // Liquid Surface Gloss Sheen
-      canvas.drawOval(
-        Rect.fromLTWH(bottleCenter.dx - bottleRadius * 0.85, liquidY - 2, bottleRadius * 1.7, 4),
-        Paint()..color = Colors.white.withValues(alpha: 0.55),
-      );
-
-      // Bubbles / Sparkles inside Liquid
-      final bubblePaint = Paint()..color = Colors.white.withValues(alpha: 0.7);
-      canvas.drawCircle(Offset(bottleCenter.dx - 4, liquidY + 6), 1.2, bubblePaint);
-      canvas.drawCircle(Offset(bottleCenter.dx + 5, liquidY + 10), 1.0, bubblePaint);
-      canvas.drawCircle(Offset(bottleCenter.dx + 1, liquidY + 14), 0.8, bubblePaint);
-    } else {
-      // Grayscale liquid for locked state
-      final liquidY = bottleCenter.dy - bottleRadius * 0.1;
-      canvas.drawRect(
-        Rect.fromLTWH(
-          bottleCenter.dx - bottleRadius,
-          liquidY,
-          bottleRadius * 2,
-          bottleRadius * 1.5,
-        ),
-        Paint()..color = Colors.white.withValues(alpha: 0.1),
-      );
-    }
-
-    canvas.restore();
-
-    // Specular Glass Specular Highlights (Left Rim Curve)
-    final glassHighlightPath = Path()
-      ..addArc(
-        Rect.fromCircle(center: bottleCenter, radius: bottleRadius - 1.5),
-        2.2, // radians angle
-        1.2, // sweep arc length
-      );
-
-    canvas.drawPath(
-      glassHighlightPath,
-      Paint()
-        ..color = Colors.white.withValues(alpha: isLocked ? 0.3 : 0.75)
+            ? const Color(0xFF555555).withValues(alpha: 0.6)
+            : const Color(0xFF8D6228).withValues(alpha: 0.6)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.8
-        ..strokeCap = StrokeCap.round,
+        ..strokeWidth = 1.0,
     );
 
-    // Glass Bottle Outline Rim
-    canvas.drawCircle(
-      bottleCenter,
-      bottleRadius,
+    // Cork grain lines
+    final grainPaint = Paint()
+      ..color = isLocked
+          ? const Color(0xFF444444).withValues(alpha: 0.35)
+          : const Color(0xFF8D6228).withValues(alpha: 0.35)
+      ..strokeWidth = 0.8;
+    canvas.drawLine(
+      Offset(corkX + corkW * 0.3, corkY + 2),
+      Offset(corkX + corkW * 0.3, corkY + corkH - 2),
+      grainPaint,
+    );
+    canvas.drawLine(
+      Offset(corkX + corkW * 0.65, corkY + 2),
+      Offset(corkX + corkW * 0.65, corkY + corkH - 2),
+      grainPaint,
+    );
+
+    // Bottle Neck Painting
+    final neckRect = RRect.fromRectAndCorners(
+      Rect.fromLTWH(neckX, neckY, neckW, neckH),
+      topLeft: const Radius.circular(2),
+      topRight: const Radius.circular(2),
+    );
+
+    canvas.drawRRect(
+      neckRect,
+      Paint()
+        ..color = isLocked
+            ? Colors.white.withValues(alpha: 0.12)
+            : const Color(0xFFD6EAF8).withValues(alpha: 0.6)
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawRRect(
+      neckRect,
       Paint()
         ..color = isLocked
             ? Colors.white.withValues(alpha: 0.25)
@@ -835,12 +778,134 @@ class _HeroPotionBottlePainter extends CustomPainter {
         ..strokeWidth = 1.2,
     );
 
-    // ── 3. Metallic Keyhole Padlock Icon for Locked State ─────────────────
+    // Bottle Body
+    final bodyRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(bottleX, bodyY, bottleW, bodyH),
+      const Radius.circular(8),
+    );
+
+    // Glass body background
+    canvas.drawRRect(
+      bodyRect,
+      Paint()
+        ..color = isLocked
+            ? Colors.white.withValues(alpha: 0.08)
+            : const Color(0xFFD6EAF8).withValues(alpha: 0.55)
+        ..style = PaintingStyle.fill,
+    );
+
+    // Liquid Fill (Clipped to body)
+    canvas.save();
+    canvas.clipRRect(bodyRect);
+
+    if (!isLocked) {
+      const double fillRatio = 0.65;
+      final double liquidTopY = bodyY + bodyH * (1.0 - fillRatio);
+
+      final liquidPath = Path();
+      liquidPath.moveTo(bottleX, liquidTopY + 3);
+      for (double x = bottleX; x <= bottleX + bottleW; x += 2) {
+        final y = liquidTopY + sin((x - bottleX) / bottleW * 2 * pi) * 2.5;
+        liquidPath.lineTo(x, y);
+      }
+      liquidPath.lineTo(bottleX + bottleW, liquidTopY + bodyH);
+      liquidPath.lineTo(bottleX, liquidTopY + bodyH);
+      liquidPath.close();
+
+      final Color liquidColor = targetColor == Colors.white
+          ? const Color(0xFFEEEEEE).withValues(alpha: 0.9)
+          : (targetColor == Colors.black
+                ? const Color(0xFF1A1A1A).withValues(alpha: 0.95)
+                : targetColor.withValues(alpha: 0.85));
+
+      canvas.drawPath(
+        liquidPath,
+        Paint()
+          ..color = liquidColor
+          ..style = PaintingStyle.fill,
+      );
+
+      // Liquid surface shimmer
+      canvas.drawLine(
+        Offset(bottleX + 4, liquidTopY + 2),
+        Offset(bottleX + bottleW - 4, liquidTopY + 2),
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.4)
+          ..strokeWidth = 1.5,
+      );
+    } else {
+      // Locked state grayscale liquid fill
+      final double liquidTopY = bodyY + bodyH * 0.35;
+      canvas.drawRect(
+        Rect.fromLTWH(bottleX, liquidTopY, bottleW, bodyH * 0.65),
+        Paint()..color = Colors.white.withValues(alpha: 0.1),
+      );
+    }
+
+    canvas.restore();
+
+    // Body Border
+    canvas.drawRRect(
+      bodyRect,
+      Paint()
+        ..color = isLocked
+            ? Colors.white.withValues(alpha: 0.35)
+            : Colors.white.withValues(alpha: 0.75)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.8,
+    );
+
+    // Glass Highlights (Left edge strips)
+    final double hlX = bottleX + bottleW * 0.12;
+    final highlightRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(hlX, bodyY + 6, 3.5, bodyH * 0.55),
+      const Radius.circular(3),
+    );
+    canvas.drawRRect(
+      highlightRect,
+      Paint()
+        ..color = Colors.white.withValues(alpha: isLocked ? 0.3 : 0.55)
+        ..style = PaintingStyle.fill,
+    );
+
+    // Secondary highlight
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(hlX + 5, bodyY + 8, 1.8, bodyH * 0.25),
+        const Radius.circular(2),
+      ),
+      Paint()
+        ..color = Colors.white.withValues(alpha: isLocked ? 0.15 : 0.3)
+        ..style = PaintingStyle.fill,
+    );
+
+    // Label Area
+    final double labelY = bodyY + bodyH * 0.28;
+    final double labelH = bodyH * 0.34;
+    final labelRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(bottleX + bottleW * 0.10, labelY, bottleW * 0.80, labelH),
+      const Radius.circular(4),
+    );
+    canvas.drawRRect(
+      labelRect,
+      Paint()
+        ..color = Colors.white.withValues(alpha: isLocked ? 0.1 : 0.22)
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawRRect(
+      labelRect,
+      Paint()
+        ..color = Colors.white.withValues(alpha: isLocked ? 0.25 : 0.4)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8,
+    );
+
+    // Metallic Keyhole Padlock Icon for Locked State
     if (isLocked) {
-      final lockW = w * 0.18;
-      final lockH = h * 0.20;
+      final lockW = bottleW * 0.30;
+      final lockH = bodyH * 0.28;
       final lockX = (w - lockW) / 2;
-      final lockY = bottleCenter.dy - lockH * 0.25;
+      final lockY = labelY + (labelH - lockH * 0.75) / 2;
 
       // Shackle
       final shackleRect = Rect.fromLTWH(
