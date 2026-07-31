@@ -3,6 +3,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
 import '../../../core/models/paint_model.dart';
+import '../../../core/puzzle/puzzle_model.dart';
 import '../../../game/paint_background_game.dart';
 import '../../../game/paint_mixing_game.dart';
 import '../../../widgets/draggable_bottle_widget.dart';
@@ -50,8 +51,12 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _calculateTileArea();
       final args = ModalRoute.of(context)?.settings.arguments;
-      if (args is int) {
+      if (args is DifficultyTier) {
+        widget.controller.loadDifficulty(args);
+      } else if (args is int) {
         widget.controller.loadLevel(args);
+      } else {
+        widget.controller.loadLevel(1);
       }
     });
   }
@@ -100,6 +105,8 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                       targetColor: ctrl.targetColor,
                       targetHex: ctrl.targetHex,
                       levelNumber: ctrl.currentLevelNumber,
+                      difficultyTier: ctrl.currentDifficultyTier,
+                      puzzleStreakCount: ctrl.puzzleStreakCount,
                       formattedTime: ctrl.formattedTime,
                       onBack: () => Navigator.pop(context),
                       onReset: () => ctrl.resetMix(),
@@ -141,6 +148,15 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                   accuracy: ctrl.accuracy,
                   mixedColor: ctrl.mixedColor,
                   formattedTime: ctrl.formattedTime,
+                  difficultyTier: ctrl.currentDifficultyTier,
+                  streakCount: ctrl.puzzleStreakCount,
+                ),
+
+              // ── Time Up Overlay ──────────────────────────────────────────
+              if (ctrl.isTimeUp)
+                _TimeUpOverlay(
+                  onRetry: () => ctrl.retryChallenge(),
+                  onExit: () => Navigator.pop(context),
                 ),
             ],
           );
@@ -157,6 +173,8 @@ class _TargetColorHeader extends StatelessWidget {
   final Color targetColor;
   final String targetHex;
   final int levelNumber;
+  final DifficultyTier? difficultyTier;
+  final int puzzleStreakCount;
   final String formattedTime;
   final VoidCallback onBack;
   final VoidCallback onReset;
@@ -165,6 +183,8 @@ class _TargetColorHeader extends StatelessWidget {
     required this.targetColor,
     required this.targetHex,
     required this.levelNumber,
+    this.difficultyTier,
+    required this.puzzleStreakCount,
     required this.formattedTime,
     required this.onBack,
     required this.onReset,
@@ -172,6 +192,8 @@ class _TargetColorHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDifficultyMode = difficultyTier != null;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
@@ -204,18 +226,50 @@ class _TargetColorHeader extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'LEVEL $levelNumber',
-                      style: const TextStyle(
-                        color: Color(0xFF5D4037),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        letterSpacing: 1.4,
-                        shadows: [
-                          Shadow(color: Color(0x33000000), offset: Offset(0, 1), blurRadius: 2),
-                        ],
+                    if (isDifficultyMode) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: difficultyTier!.primaryColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          difficultyTier!.displayName.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 10,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'PUZZLE #$puzzleStreakCount',
+                        style: const TextStyle(
+                          color: Color(0xFF5D4037),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          letterSpacing: 1.2,
+                          shadows: [
+                            Shadow(color: Color(0x33000000), offset: Offset(0, 1), blurRadius: 2),
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      Text(
+                        'LEVEL $levelNumber',
+                        style: const TextStyle(
+                          color: Color(0xFF5D4037),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          letterSpacing: 1.4,
+                          shadows: [
+                            Shadow(color: Color(0x33000000), offset: Offset(0, 1), blurRadius: 2),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(width: 8),
                     Container(
                       width: 4,
@@ -440,15 +494,21 @@ class _VictoryOverlay extends StatelessWidget {
   final double accuracy;
   final Color mixedColor;
   final String formattedTime;
+  final DifficultyTier? difficultyTier;
+  final int streakCount;
 
   const _VictoryOverlay({
     required this.accuracy,
     required this.mixedColor,
     required this.formattedTime,
+    this.difficultyTier,
+    this.streakCount = 1,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool isDifficulty = difficultyTier != null;
+
     return Positioned.fill(
       child: Container(
         color: const Color(0xFF3B1E08).withValues(alpha: 0.6),
@@ -475,6 +535,27 @@ class _VictoryOverlay extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Difficulty badge tag if in difficulty mode
+                if (isDifficulty) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: difficultyTier!.primaryColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${difficultyTier!.displayName.toUpperCase()} PUZZLE #$streakCount SOLVED!',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
                 // Color swatch of matched color
                 Container(
                   width: 64,
@@ -562,9 +643,169 @@ class _VictoryOverlay extends StatelessWidget {
                   child: CircularProgressIndicator(color: Color(0xFFD4A055), strokeWidth: 3),
                 ),
                 const SizedBox(height: 8),
+                Text(
+                  isDifficulty ? 'Generating Next ${difficultyTier!.displayName} Puzzle...' : 'Generating Next Target...',
+                  style: const TextStyle(color: Color(0xFF8D6228), fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Time Up Overlay — displayed when 2-minute countdown expires
+// ──────────────────────────────────────────────────────────────────────────────
+class _TimeUpOverlay extends StatelessWidget {
+  final VoidCallback onRetry;
+  final VoidCallback onExit;
+
+  const _TimeUpOverlay({required this.onRetry, required this.onExit});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: Container(
+        color: const Color(0xFF3B1E08).withValues(alpha: 0.75),
+        child: Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFF5DEB3), Color(0xFFE8C898)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: const Color(0xFFFF5722), width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF5722).withValues(alpha: 0.5),
+                  blurRadius: 30,
+                  spreadRadius: 4,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Flame timer icon badge
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF5722), Color(0xFFD84315)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFFFCC80), width: 2.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF5722).withValues(alpha: 0.6),
+                        blurRadius: 18,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.timer_off_rounded, color: Colors.white, size: 34),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 const Text(
-                  'Generating Next Target...',
-                  style: TextStyle(color: Color(0xFF8D6228), fontSize: 12),
+                  'TIME EXPIRED!',
+                  style: TextStyle(
+                    color: Color(0xFFD84315),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.4,
+                    shadows: [
+                      Shadow(color: Color(0x44000000), offset: Offset(0, 2), blurRadius: 4),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'The 2-minute timer ran out before you matched the color!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF5D4037),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Exit button
+                    GestureDetector(
+                      onTap: onExit,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF5D4037).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF5D4037), width: 1.5),
+                        ),
+                        child: const Text(
+                          'EXIT',
+                          style: TextStyle(
+                            color: Color(0xFF5D4037),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    // Retry button
+                    GestureDetector(
+                      onTap: onRetry,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFF7043), Color(0xFFD84315)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFFFCC80), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF5722).withValues(alpha: 0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.replay_rounded, color: Colors.white, size: 20),
+                            SizedBox(width: 6),
+                            Text(
+                              'TRY AGAIN',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 13,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

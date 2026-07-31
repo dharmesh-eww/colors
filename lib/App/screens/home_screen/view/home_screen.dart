@@ -1,7 +1,9 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
+import '../../../core/puzzle/puzzle_model.dart';
 import '../../../game/paint_background_game.dart';
+import '../../level_selection_screen/view/level_selection_screen.dart';
 import '../binding/home_screen_binding.dart';
 import '../controller/home_screen_controller.dart';
 
@@ -91,117 +93,76 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF8B5E3C),
-      body: Stack(
-        children: [
-          // ── Layer 1: Warm Wood Background ──────────────────────────────
-          Positioned.fill(child: GameWidget(game: _bgGame)),
-          Positioned.fill(
-            child: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 28),
-
-                  // ── Logo + Title ──────────────────────────────────────────
-                  _LogoBadge(shimmerAnimation: _shimmerAnimation),
-
-                  const SizedBox(height: 14),
-
-                  // ── Title ─────────────────────────────────────────────────
-                  const Text(
-                    'Color Craft',
-                    style: TextStyle(
-                      fontSize: 42,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFFF5DEB3),
-                      letterSpacing: 2.0,
-                      shadows: [
-                        Shadow(color: Color(0xFF3B1E08), offset: Offset(0, 3), blurRadius: 8),
-                        Shadow(color: Color(0xFFFFD700), offset: Offset(0, -1), blurRadius: 6),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // ── Subtitle badge ────────────────────────────────────────
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFD4A055), Color(0xFFB87333)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: const Color(0xFFFFD700).withValues(alpha: 0.6),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: const Text(
-                      'Mix · Match · Paint Puzzle',
-                      style: TextStyle(
-                        color: Color(0xFFFFF8E1),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // ── Today's Color Craft Challenge Banner ─────────────────
-                  _DailyChallengeBannerWidget(
-                    onTap: () => widget.controller.dailyChallengeClicked(context),
-                  ),
-
-                  const Spacer(),
-
-                  // ── Central Mixing Station Preview ────────────────────────
-                  _MixingStationPreview(floatAnimation: _floatAnimation),
-
-                  const Spacer(),
-
-                  // ── PLAY Button ───────────────────────────────────────────
-                  _PlayButtonWidget(
-                    onTap: () => widget.controller.playButtonClicked(context),
-                    pulseAnimation: _scaleAnimation,
-                  ),
-
-                  const Spacer(),
-                  const SizedBox(height: 14),
-                ],
-              ),
-            ),
+    return StateBuilder<HomeScreenController>(
+      controller: widget.controller,
+      builder: (context, ctrl, child) {
+        return Scaffold(
+          backgroundColor: const Color(0xFF8B5E3C),
+          body: IndexedStack(
+            index: ctrl.currentTabIndex,
+            children: [
+              _buildHomePlayTabContent(),
+              LevelSelectionScreen(),
+              const _BlankProfilePage(),
+            ],
           ),
-          Positioned(
-            top: 14,
-            right: 16,
-            child: SafeArea(
-              child: GestureDetector(
-                onTap: () => widget.controller.settingsButtonClicked(context),
-                child: Container(
-                  width: 44,
-                  height: 44,
+          bottomNavigationBar: _WoodenBottomNavigationBar(
+            currentIndex: ctrl.currentTabIndex,
+            onTap: (index) => ctrl.changeTab(index),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHomePlayTabContent() {
+    return Stack(
+      children: [
+        // ── Layer 1: Warm Wood Background ──────────────────────────────
+        Positioned.fill(child: GameWidget(game: _bgGame)),
+        Positioned.fill(
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 16),
+
+                // ── Logo + Title ──────────────────────────────────────────
+                _LogoBadge(shimmerAnimation: _shimmerAnimation),
+
+                const SizedBox(height: 10),
+
+                // ── Title ─────────────────────────────────────────────────
+                const Text(
+                  'Color Craft',
+                  style: TextStyle(
+                    fontSize: 38,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFF5DEB3),
+                    letterSpacing: 2.0,
+                    shadows: [
+                      Shadow(color: Color(0xFF3B1E08), offset: Offset(0, 3), blurRadius: 8),
+                      Shadow(color: Color(0xFFFFD700), offset: Offset(0, -1), blurRadius: 6),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                // ── Subtitle badge ────────────────────────────────────────
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFF5DEB3), Color(0xFFE8C898)],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFFD4A055), Color(0xFFB87333)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFFFD700).withValues(alpha: 0.6),
+                      width: 1.5,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
@@ -210,13 +171,74 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.settings_rounded, color: Color(0xFF5D4037), size: 24),
+                  child: const Text(
+                    'Mix · Match · Paint Puzzle',
+                    style: TextStyle(
+                      color: Color(0xFFFFF8E1),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
                 ),
+
+                const SizedBox(height: 12),
+
+                // ── Wooden Difficulty Buttons ─────────────────────────────
+                _WoodenDifficultyButtonsBar(
+                  onDifficultyTap: (tier) => widget.controller.onDifficultyClicked(context, tier),
+                ),
+
+                const Spacer(),
+
+                // ── Central Mixing Station Preview ────────────────────────
+                _MixingStationPreview(floatAnimation: _floatAnimation),
+
+                const Spacer(),
+
+                // ── PLAY Button ───────────────────────────────────────────
+                _PlayButtonWidget(
+                  onTap: () => widget.controller.playButtonClicked(context),
+                  pulseAnimation: _scaleAnimation,
+                ),
+
+                const Spacer(),
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          top: 14,
+          right: 16,
+          child: SafeArea(
+            child: GestureDetector(
+              onTap: () => widget.controller.settingsButtonClicked(context),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF5DEB3), Color(0xFFE8C898)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.settings_rounded, color: Color(0xFF5D4037), size: 24),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -907,4 +929,323 @@ class _DailyChallengeFramePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// 3D Wooden Bottom Navigation Bar (PLAY, LEVELS, PROFILE)
+// ──────────────────────────────────────────────────────────────────────────────
+class _WoodenBottomNavigationBar extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const _WoodenBottomNavigationBar({required this.currentIndex, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 72,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF6E3B1C), // Deep chocolate top
+            Color(0xFF532911), // Mid warm oak
+            Color(0xFF381806), // Dark wood base
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        border: const Border(top: BorderSide(color: Color(0xFFFFD700), width: 2.0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF241004).withValues(alpha: 0.7),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildNavItem(index: 0, icon: Icons.sports_esports_rounded, label: 'PLAY'),
+          _buildNavItem(index: 1, icon: Icons.grid_view_rounded, label: 'LEVELS'),
+          _buildNavItem(index: 2, icon: Icons.person_rounded, label: 'PROFILE'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem({required int index, required IconData icon, required String label}) {
+    final bool isSelected = currentIndex == index;
+
+    return GestureDetector(
+      onTap: () => onTap(index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [Color(0xFFF5DEB3), Color(0xFFD4A055)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              : null,
+          borderRadius: BorderRadius.circular(20),
+          border: isSelected ? Border.all(color: const Color(0xFFFFE082), width: 1.5) : null,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: isSelected
+                  ? const Color(0xFF3B1E08)
+                  : const Color(0xFFF5DEB3).withValues(alpha: 0.7),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected
+                    ? const Color(0xFF3B1E08)
+                    : const Color(0xFFF5DEB3).withValues(alpha: 0.7),
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// 3D Wooden Difficulty Buttons Bar for Home Screen
+// ──────────────────────────────────────────────────────────────────────────────
+class _WoodenDifficultyButtonsBar extends StatelessWidget {
+  final Function(DifficultyTier) onDifficultyTap;
+
+  const _WoodenDifficultyButtonsBar({required this.onDifficultyTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final List<DifficultyTier> tiers = DifficultyTier.values;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+          child: Row(
+            children: [
+              const Icon(Icons.psychology_rounded, size: 16, color: Color(0xFFFFD700)),
+              const SizedBox(width: 6),
+              const Text(
+                'DIFFICULTY MODES',
+                style: TextStyle(
+                  color: Color(0xFFF5DEB3),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.2,
+                  shadows: [Shadow(color: Color(0xFF3B1E08), offset: Offset(0, 1), blurRadius: 2)],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          height: 46,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: tiers.length,
+            itemBuilder: (context, index) {
+              final tier = tiers[index];
+              return _WoodenDifficultyButtonPill(tier: tier, onTap: () => onDifficultyTap(tier));
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WoodenDifficultyButtonPill extends StatefulWidget {
+  final DifficultyTier tier;
+  final VoidCallback onTap;
+
+  const _WoodenDifficultyButtonPill({required this.tier, required this.onTap});
+
+  @override
+  State<_WoodenDifficultyButtonPill> createState() => _WoodenDifficultyButtonPillState();
+}
+
+class _WoodenDifficultyButtonPillState extends State<_WoodenDifficultyButtonPill> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tier = widget.tier;
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.92 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          margin: const EdgeInsets.only(right: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF6E3B1C), Color(0xFF532911), Color(0xFF421E0B)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.8), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: tier.primaryColor.withValues(alpha: 0.35),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: tier.primaryColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1.0),
+                ),
+                child: Center(child: Icon(_getIconForTier(tier), size: 13, color: Colors.white)),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                tier.displayName.toUpperCase(),
+                style: const TextStyle(
+                  color: Color(0xFFFFF1D6),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  IconData _getIconForTier(DifficultyTier tier) {
+    switch (tier) {
+      case DifficultyTier.easy:
+        return Icons.auto_awesome_rounded;
+      case DifficultyTier.medium:
+        return Icons.science_rounded;
+      case DifficultyTier.hard:
+        return Icons.whatshot_rounded;
+      case DifficultyTier.expert:
+        return Icons.military_tech_rounded;
+      case DifficultyTier.challenge:
+        return Icons.timer_rounded;
+    }
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Blank Profile Page Placeholder
+// ──────────────────────────────────────────────────────────────────────────────
+class _BlankProfilePage extends StatelessWidget {
+  const _BlankProfilePage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFF8B5E3C),
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 32),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF6E3B1C), Color(0xFF532911), Color(0xFF421E0B)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF3B1E08).withValues(alpha: 0.5),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF5DEB3), Color(0xFFD4A055)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
+                ),
+                child: const Icon(Icons.person_rounded, size: 36, color: Color(0xFF5D4037)),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'PROFILE',
+                style: TextStyle(
+                  color: Color(0xFFFFF1D6),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2.0,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Player stats & achievements coming soon!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFFF5DEB3),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

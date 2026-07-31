@@ -170,9 +170,9 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
                 // ── Header Panel ──────────────────────────────────────────
                 _Header(completedCount: _completedCount, totalCount: _totalLevelsCount),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
-                // ── Page View Grid with Silky Smooth Carousel Physics ──────
+                // ── 1000 Level Matrix Grid PageView ───────────────────────
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -189,27 +189,19 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
                         return AnimatedBuilder(
                           animation: Listenable.merge([_pageController, _glowAnimation]),
                           builder: (context, child) {
-                            // Smooth Page Scale & Fade Transition
                             double pageOffset = 0.0;
                             if (_pageController.position.haveDimensions) {
-                              pageOffset =
-                                  (_pageController.page ?? _currentPage.toDouble()) - pageIndex;
+                              pageOffset = (_pageController.page ?? _currentPage.toDouble()) - pageIndex;
                             } else {
                               pageOffset = (_currentPage - pageIndex).toDouble();
                             }
 
                             final double scale = (1.0 - (pageOffset.abs() * 0.12)).clamp(0.88, 1.0);
-                            final double opacity = (1.0 - (pageOffset.abs() * 0.45)).clamp(
-                              0.35,
-                              1.0,
-                            );
+                            final double opacity = (1.0 - (pageOffset.abs() * 0.45)).clamp(0.35, 1.0);
 
                             return Transform.scale(
                               scale: scale,
-                              child: Opacity(
-                                opacity: opacity,
-                                child: _buildCustomGridPage(pageIndex),
-                              ),
+                              child: Opacity(opacity: opacity, child: _buildCustomGridPage(pageIndex)),
                             );
                           },
                         );
@@ -940,3 +932,8 @@ class _HeroPotionBottlePainter extends CustomPainter {
       oldDelegate.isLocked != isLocked ||
       oldDelegate.glowValue != glowValue;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mode Segmented Switcher (Difficulty Modes vs 1000 Levels)
+// ─────────────────────────────────────────────────────────────────────────────
+

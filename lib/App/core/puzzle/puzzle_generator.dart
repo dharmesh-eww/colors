@@ -50,12 +50,97 @@ class PuzzleGenerator {
     ),
   };
 
+  /// Generates a random puzzle level tailored specifically for [tier].
+  static PuzzleLevel generateRandomPuzzleForDifficulty(
+    DifficultyTier tier, {
+    int puzzleIndex = 1,
+  }) {
+    final int seed = DateTime.now().microsecondsSinceEpoch ^ (puzzleIndex * 31);
+    final Random random = Random(seed);
+
+    final int requiredColorCount = tier.requiredColors;
+    final int extraColorCount = tier.distractorColors;
+
+    final List<PaintType> allTypes = List.from(PaintType.values);
+    allTypes.shuffle(random);
+
+    final List<PaintType> recipeTypes =
+        allTypes.take(requiredColorCount.clamp(1, allTypes.length)).toList();
+
+    final List<PaintType> distractorCandidates =
+        allTypes.where((type) => !recipeTypes.contains(type)).toList();
+
+    final Map<PaintType, double> targetRecipe = {};
+    double cyanMl = 0.0;
+    double magentaMl = 0.0;
+    double yellowMl = 0.0;
+    double blackMl = 0.0;
+    double whiteMl = 0.0;
+
+    for (var type in recipeTypes) {
+      final double amountMl = (3 + random.nextInt(7)) * 5.0;
+      targetRecipe[type] = amountMl;
+
+      switch (type) {
+        case PaintType.cyan:
+          cyanMl = amountMl;
+          break;
+        case PaintType.magenta:
+          magentaMl = amountMl;
+          break;
+        case PaintType.yellow:
+          yellowMl = amountMl;
+          break;
+        case PaintType.black:
+          blackMl = amountMl;
+          break;
+        case PaintType.white:
+          whiteMl = amountMl;
+          break;
+      }
+    }
+
+    final Color targetColor = ColorMixer.mix(
+      cyanMl: cyanMl,
+      magentaMl: magentaMl,
+      yellowMl: yellowMl,
+      blackMl: blackMl,
+      whiteMl: whiteMl,
+    );
+
+    final String targetHex = _colorToHex(targetColor);
+    final List<PaintBottle> availableBottles = [];
+
+    for (var type in recipeTypes) {
+      final base = _defaultPrimaryBottles[type]!;
+      availableBottles.add(base.copyWith(availableMl: 100.0, pouredMl: 0.0));
+    }
+
+    final int distractorCountToAdd = distractorCandidates.isEmpty
+        ? 0
+        : extraColorCount.clamp(0, distractorCandidates.length);
+    for (int i = 0; i < distractorCountToAdd; i++) {
+      final type = distractorCandidates[i];
+      final base = _defaultPrimaryBottles[type]!;
+      availableBottles.add(base.copyWith(availableMl: 100.0, pouredMl: 0.0));
+    }
+
+    availableBottles.shuffle(random);
+
+    return PuzzleLevel(
+      levelNumber: puzzleIndex,
+      tier: tier,
+      difficultyName: tier.displayName,
+      requiredColorCount: requiredColorCount,
+      extraColorCount: distractorCountToAdd,
+      targetColor: targetColor,
+      targetHex: targetHex,
+      targetRecipe: targetRecipe,
+      availableBottles: availableBottles,
+    );
+  }
+
   /// Generates a deterministic puzzle level for [levelNumber] (1 to N).
-  ///
-  /// - [levelNumber]: Target level number (1-based).
-  /// - [difficultyGap]: Number of levels per difficulty group (default: 20).
-  /// - [minColors]: Minimum required mixture colors for tier 0 (default: 2).
-  /// - [maxColors]: Maximum mixture colors for high tiers (default: 6).
   static PuzzleLevel generateLevel(
     int levelNumber, {
     int difficultyGap = defaultDifficultyGap,
@@ -74,8 +159,9 @@ class PuzzleGenerator {
     // Extra distractor count (1 extra for early, 2 for mid, 3 for high)
     final int extraColorCount = (1 + groupIndex ~/ 2).clamp(1, 3);
 
-    // Difficulty tier name
-    final String difficultyName = _getDifficultyName(groupIndex);
+    // Difficulty tier
+    final DifficultyTier tier = _groupIndexToTier(groupIndex);
+    final String difficultyName = tier.displayName;
 
     // Seeded PRNG for 100% deterministic puzzle generation per level
     final Random random = Random(validLevel * 10007 + 7919);
@@ -160,6 +246,7 @@ class PuzzleGenerator {
 
     return PuzzleLevel(
       levelNumber: validLevel,
+      tier: tier,
       difficultyName: difficultyName,
       requiredColorCount: requiredColorCount,
       extraColorCount: distractorCountToAdd,
@@ -170,20 +257,17 @@ class PuzzleGenerator {
     );
   }
 
-  static String _getDifficultyName(int groupIndex) {
+  static DifficultyTier _groupIndexToTier(int groupIndex) {
     switch (groupIndex) {
       case 0:
-        return 'Easy';
+        return DifficultyTier.easy;
       case 1:
-        return 'Medium';
+        return DifficultyTier.medium;
       case 2:
-        return 'Hard';
+        return DifficultyTier.hard;
       case 3:
-        return 'Expert';
-      case 4:
-        return 'Master';
       default:
-        return 'Grandmaster';
+        return DifficultyTier.expert;
     }
   }
 

@@ -14,6 +14,8 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   final LevelStorageService _levelStorageService = LevelStorageService();
 
   int _currentLevelNumber = 1;
+  DifficultyTier? _currentDifficultyTier;
+  int _puzzleStreakCount = 1;
   PuzzleLevel? _currentPuzzle;
 
   Color _targetColor = const Color(0xFF008080);
@@ -32,9 +34,17 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
 
   Timer? _timer;
   int _elapsedSeconds = 0;
+  int _remainingSeconds = 120;
+  bool _isTimeUp = false;
 
   // Getters
   int get currentLevelNumber => _currentLevelNumber;
+  DifficultyTier? get currentDifficultyTier => _currentDifficultyTier;
+  int get puzzleStreakCount => _puzzleStreakCount;
+  bool get isDifficultyMode => _currentDifficultyTier != null;
+  bool get isCountdownMode => _currentDifficultyTier?.isCountdown ?? false;
+  int get remainingSeconds => _remainingSeconds;
+  bool get isTimeUp => _isTimeUp;
   PuzzleLevel? get currentPuzzle => _currentPuzzle;
   Color get targetColor => _targetColor;
   Color get mixedColor => _mixedColor;
@@ -48,24 +58,31 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   int get elapsedSeconds => _elapsedSeconds;
 
   String get formattedTime {
-    final minutes = (_elapsedSeconds ~/ 60).toString().padLeft(2, '0');
-    final seconds = (_elapsedSeconds % 60).toString().padLeft(2, '0');
+    final int totalSecs = isCountdownMode ? _remainingSeconds : _elapsedSeconds;
+    final minutes = (totalSecs ~/ 60).toString().padLeft(2, '0');
+    final seconds = (totalSecs % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
 
   String get targetHex => _currentPuzzle?.targetHex ?? _colorToHex(_targetColor);
 
-  @override
-  void onInit() {
-    super.onInit();
-    loadLevel(1);
-  }
-
   void startTimer() {
     _timer?.cancel();
     _elapsedSeconds = 0;
+    _remainingSeconds = _currentDifficultyTier?.countdownDurationSeconds ?? 120;
+    _isTimeUp = false;
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _elapsedSeconds++;
+      if (isCountdownMode) {
+        if (_remainingSeconds > 0) {
+          _remainingSeconds--;
+        } else {
+          stopTimer();
+          _isTimeUp = true;
+        }
+      } else {
+        _elapsedSeconds++;
+      }
       update();
     });
   }
@@ -85,7 +102,40 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
     flameGame = game;
   }
 
+  void loadDifficulty(DifficultyTier tier) {
+    _currentDifficultyTier = tier;
+    _currentPuzzle = PuzzleGenerator.generateRandomPuzzleForDifficulty(
+      tier,
+      puzzleIndex: _puzzleStreakCount,
+    );
+    _targetColor = _currentPuzzle!.targetColor;
+
+    _bottles.clear();
+    for (var bottle in _currentPuzzle!.availableBottles) {
+      _bottles[bottle.type] = bottle.copyWith(availableMl: 100.0, pouredMl: 0.0);
+    }
+
+    if (_bottles.isNotEmpty) {
+      _selectedType = _bottles.keys.first;
+    }
+
+    _resetPaintsInternal();
+    _isCompleted = false;
+    _isTimeUp = false;
+    startTimer();
+    update();
+  }
+
+  void retryChallenge() {
+    _resetPaintsInternal();
+    _isCompleted = false;
+    _isTimeUp = false;
+    startTimer();
+    update();
+  }
+
   void loadLevel(int levelNumber) {
+    _currentDifficultyTier = null;
     _currentLevelNumber = levelNumber < 1 ? 1 : levelNumber;
     _currentPuzzle = PuzzleGenerator.generateLevel(_currentLevelNumber);
     _targetColor = _currentPuzzle!.targetColor;
@@ -111,7 +161,12 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   }
 
   void initNewTarget() {
-    loadLevel(_currentLevelNumber + 1);
+    if (_currentDifficultyTier != null) {
+      _puzzleStreakCount++;
+      loadDifficulty(_currentDifficultyTier!);
+    } else {
+      loadLevel(_currentLevelNumber + 1);
+    }
   }
 
   void _resetPaintsInternal() {
