@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
@@ -7,8 +6,7 @@ import '../binding/home_screen_binding.dart';
 import '../controller/home_screen_controller.dart';
 
 // ignore: must_be_immutable
-class HomeScreen extends StatekitView<HomeScreenController>
-    implements HomeScreenBinding {
+class HomeScreen extends StatekitView<HomeScreenController> implements HomeScreenBinding {
   HomeScreen({super.key, super.tag});
 
   @override
@@ -28,8 +26,7 @@ class _HomeScreenBody extends StatefulWidget {
   State<_HomeScreenBody> createState() => _HomeScreenBodyState();
 }
 
-class _HomeScreenBodyState extends State<_HomeScreenBody>
-    with TickerProviderStateMixin {
+class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _bottleFloatController;
   late AnimationController _shimmerController;
@@ -51,9 +48,10 @@ class _HomeScreenBodyState extends State<_HomeScreenBody>
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
 
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.05,
+    ).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
 
     // Decorative ink bottle floating
     _bottleFloatController = AnimationController(
@@ -61,9 +59,10 @@ class _HomeScreenBodyState extends State<_HomeScreenBody>
       duration: const Duration(milliseconds: 2800),
     )..repeat(reverse: true);
 
-    _floatAnimation = Tween<double>(begin: -6.0, end: 6.0).animate(
-      CurvedAnimation(parent: _bottleFloatController, curve: Curves.easeInOut),
-    );
+    _floatAnimation = Tween<double>(
+      begin: -6.0,
+      end: 6.0,
+    ).animate(CurvedAnimation(parent: _bottleFloatController, curve: Curves.easeInOut));
 
     // Glow shimmer on title
     _shimmerController = AnimationController(
@@ -71,9 +70,10 @@ class _HomeScreenBodyState extends State<_HomeScreenBody>
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
 
-    _shimmerAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
-    );
+    _shimmerAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut));
   }
 
   @override
@@ -86,63 +86,12 @@ class _HomeScreenBodyState extends State<_HomeScreenBody>
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
       backgroundColor: const Color(0xFF8B5E3C),
       body: Stack(
         children: [
           // ── Layer 1: Warm Wood Background ──────────────────────────────
           Positioned.fill(child: GameWidget(game: _bgGame)),
-
-          // ── Layer 2: Floating decorative ink bottles (CustomPaint) ─────
-          AnimatedBuilder(
-            animation: _floatAnimation,
-            builder: (context, child) {
-              return Stack(
-                children: [
-                  // Left ink bottle (Cyan)
-                  Positioned(
-                    top: screenHeight * 0.18 + _floatAnimation.value,
-                    left: -10,
-                    child: Transform.rotate(
-                      angle: 0.18 + sin(_floatAnimation.value * 0.1) * 0.04,
-                      child: const _DecorInkBottle(
-                        color: Color(0xFF00FFFF),
-                        size: 80,
-                      ),
-                    ),
-                  ),
-                  // Right ink bottle (Magenta)
-                  Positioned(
-                    top: screenHeight * 0.14 - _floatAnimation.value,
-                    right: -12,
-                    child: Transform.rotate(
-                      angle: -0.22 + cos(_floatAnimation.value * 0.1) * 0.04,
-                      child: const _DecorInkBottle(
-                        color: Color(0xFFFF00FF),
-                        size: 75,
-                      ),
-                    ),
-                  ),
-                  // Bottom-left small bottle (Yellow)
-                  Positioned(
-                    bottom: screenHeight * 0.28 - _floatAnimation.value * 0.6,
-                    left: 5,
-                    child: Transform.rotate(
-                      angle: 0.12,
-                      child: const _DecorInkBottle(
-                        color: Color(0xFFFFFF00),
-                        size: 60,
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-
-          // ── Layer 3: Main UI Content ────────────────────────────────────
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -163,14 +112,8 @@ class _HomeScreenBodyState extends State<_HomeScreenBody>
                     color: Color(0xFFF5DEB3),
                     letterSpacing: 2.0,
                     shadows: [
-                      Shadow(
-                          color: Color(0xFF3B1E08),
-                          offset: Offset(0, 3),
-                          blurRadius: 8),
-                      Shadow(
-                          color: Color(0xFFFFD700),
-                          offset: Offset(0, -1),
-                          blurRadius: 6),
+                      Shadow(color: Color(0xFF3B1E08), offset: Offset(0, 3), blurRadius: 8),
+                      Shadow(color: Color(0xFFFFD700), offset: Offset(0, -1), blurRadius: 6),
                     ],
                   ),
                 ),
@@ -179,8 +122,7 @@ class _HomeScreenBodyState extends State<_HomeScreenBody>
 
                 // ── Subtitle badge ────────────────────────────────────────
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFFD4A055), Color(0xFFB87333)],
@@ -189,8 +131,9 @@ class _HomeScreenBodyState extends State<_HomeScreenBody>
                     ),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                        color: const Color(0xFFFFD700).withValues(alpha: 0.6),
-                        width: 1.5),
+                      color: const Color(0xFFFFD700).withValues(alpha: 0.6),
+                      width: 1.5,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
@@ -221,8 +164,7 @@ class _HomeScreenBodyState extends State<_HomeScreenBody>
                 ScaleTransition(
                   scale: _scaleAnimation,
                   child: GestureDetector(
-                    onTap: () =>
-                        widget.controller.playButtonClicked(context),
+                    onTap: () => widget.controller.playButtonClicked(context),
                     child: Container(
                       width: 210,
                       height: 66,
@@ -233,20 +175,16 @@ class _HomeScreenBodyState extends State<_HomeScreenBody>
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(33),
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            width: 2.5),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2.5),
                         boxShadow: [
                           BoxShadow(
-                            color:
-                                const Color(0xFFFFD700).withValues(alpha: 0.6),
+                            color: const Color(0xFFFFD700).withValues(alpha: 0.6),
                             blurRadius: 24,
                             spreadRadius: 2,
                             offset: const Offset(0, 6),
                           ),
                           BoxShadow(
-                            color:
-                                const Color(0xFF3B1E08).withValues(alpha: 0.3),
+                            color: const Color(0xFF3B1E08).withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -259,8 +197,7 @@ class _HomeScreenBodyState extends State<_HomeScreenBody>
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color:
-                                  const Color(0xFF3B1E08).withValues(alpha: 0.2),
+                              color: const Color(0xFF3B1E08).withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -279,9 +216,10 @@ class _HomeScreenBodyState extends State<_HomeScreenBody>
                               letterSpacing: 3,
                               shadows: [
                                 Shadow(
-                                    color: Color(0x33FFFFFF),
-                                    offset: Offset(0, 1),
-                                    blurRadius: 2),
+                                  color: Color(0x33FFFFFF),
+                                  offset: Offset(0, 1),
+                                  blurRadius: 2,
+                                ),
                               ],
                             ),
                           ),
@@ -308,18 +246,6 @@ class _HomeScreenBodyState extends State<_HomeScreenBody>
                 ),
 
                 const Spacer(),
-
-                // ── Bottom version ────────────────────────────────────────
-                Text(
-                  'v1.0 · Color Lab Edition',
-                  style: TextStyle(
-                    color:
-                        const Color(0xFFF5DEB3).withValues(alpha: 0.55),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
                 const SizedBox(height: 14),
               ],
             ),
@@ -341,9 +267,7 @@ class _HomeScreenBodyState extends State<_HomeScreenBody>
                 end: Alignment.bottomRight,
               )
             : null,
-        color: isSelected
-            ? null
-            : const Color(0xFF3B1E08).withValues(alpha: 0.35),
+        color: isSelected ? null : const Color(0xFF3B1E08).withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isSelected
@@ -401,16 +325,13 @@ class _LogoBadge extends StatelessWidget {
             border: Border.all(color: const Color(0xFFFFD700), width: 2.5),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFFFD700)
-                    .withValues(alpha: 0.3 + shimmerAnimation.value * 0.3),
+                color: const Color(
+                  0xFFFFD700,
+                ).withValues(alpha: 0.3 + shimmerAnimation.value * 0.3),
                 blurRadius: 20 + shimmerAnimation.value * 14,
                 spreadRadius: 2 + shimmerAnimation.value * 4,
               ),
-              const BoxShadow(
-                color: Color(0xFF3B1E08),
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
+              const BoxShadow(color: Color(0xFF3B1E08), blurRadius: 8, offset: Offset(0, 4)),
             ],
           ),
           child: Stack(
@@ -425,10 +346,7 @@ class _LogoBadge extends StatelessWidget {
                 child: Container(
                   width: 10,
                   height: 10,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF00FFFF),
-                    shape: BoxShape.circle,
-                  ),
+                  decoration: const BoxDecoration(color: Color(0xFF00FFFF), shape: BoxShape.circle),
                 ),
               ),
               Positioned(
@@ -437,10 +355,7 @@ class _LogoBadge extends StatelessWidget {
                 child: Container(
                   width: 9,
                   height: 9,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF00FF),
-                    shape: BoxShape.circle,
-                  ),
+                  decoration: const BoxDecoration(color: Color(0xFFFF00FF), shape: BoxShape.circle),
                 ),
               ),
             ],
@@ -475,16 +390,11 @@ class _MixingStationPreview extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(22),
                   gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFD4A055),
-                      Color(0xFF8B5E3C),
-                      Color(0xFF5D3A1A),
-                    ],
+                    colors: [Color(0xFFD4A055), Color(0xFF8B5E3C), Color(0xFF5D3A1A)],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
-                  border:
-                      Border.all(color: const Color(0xFFFFD700), width: 2.0),
+                  border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFF3B1E08).withValues(alpha: 0.5),
@@ -534,8 +444,7 @@ class _MixingStationPreview extends StatelessWidget {
                               child: Text(
                                 'MIX IT!',
                                 style: TextStyle(
-                                  color: const Color(0xFFFFD700)
-                                      .withValues(alpha: 0.9),
+                                  color: const Color(0xFFFFD700).withValues(alpha: 0.9),
                                   fontSize: 10,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.5,
@@ -593,8 +502,7 @@ class _MixingStationPreview extends StatelessWidget {
   }
 
   Widget _colorDot(Color color, String label) {
-    final bool isDark =
-        color.computeLuminance() < 0.12 || color == const Color(0xFF1A1A1A);
+    final bool isDark = color.computeLuminance() < 0.12 || color == const Color(0xFF1A1A1A);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -604,10 +512,7 @@ class _MixingStationPreview extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0xFFFFD700).withValues(alpha: 0.6),
-              width: 1.5,
-            ),
+            border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.6), width: 1.5),
             boxShadow: [
               BoxShadow(
                 color: color.withValues(alpha: isDark ? 0.3 : 0.5),
@@ -660,10 +565,7 @@ class _HomeBeakerPainter extends CustomPainter {
     canvas.clipPath(beakerPath);
 
     // Glass bg
-    canvas.drawPath(
-      beakerPath,
-      Paint()..color = Colors.white.withValues(alpha: 0.12),
-    );
+    canvas.drawPath(beakerPath, Paint()..color = Colors.white.withValues(alpha: 0.12));
 
     // Liquid fill (teal demo)
     final liquidPath = Path()
@@ -673,10 +575,7 @@ class _HomeBeakerPainter extends CustomPainter {
       ..lineTo(0, h)
       ..close();
 
-    canvas.drawPath(
-      liquidPath,
-      Paint()..color = const Color(0xFF008080).withValues(alpha: 0.85),
-    );
+    canvas.drawPath(liquidPath, Paint()..color = const Color(0xFF008080).withValues(alpha: 0.85));
 
     canvas.restore();
 
@@ -702,102 +601,4 @@ class _HomeBeakerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _HomeBeakerPainter oldDelegate) => false;
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Decorative floating ink bottle (CustomPaint) — no images used
-// ──────────────────────────────────────────────────────────────────────────────
-class _DecorInkBottle extends StatelessWidget {
-  final Color color;
-  final double size;
-  const _DecorInkBottle({required this.color, required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: 0.65,
-      child: SizedBox(
-        width: size,
-        height: size * 1.4,
-        child: CustomPaint(
-          painter: _DecorBottlePainter(color: color),
-        ),
-      ),
-    );
-  }
-}
-
-class _DecorBottlePainter extends CustomPainter {
-  final Color color;
-  const _DecorBottlePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double w = size.width;
-    final double h = size.height;
-
-    // Cork
-    final corkW = w * 0.36;
-    final corkX = (w - corkW) / 2;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          Rect.fromLTWH(corkX, 0, corkW, h * 0.10),
-          const Radius.circular(3)),
-      Paint()..color = const Color(0xFFD4A055),
-    );
-
-    // Neck
-    final neckW = w * 0.38;
-    final neckX = (w - neckW) / 2;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          Rect.fromLTWH(neckX, h * 0.10, neckW, h * 0.14),
-          const Radius.circular(2)),
-      Paint()..color = Colors.white.withValues(alpha: 0.4),
-    );
-
-    // Body
-    final bodyY = h * 0.24;
-    final bodyH = h - bodyY;
-    final bodyRect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, bodyY, w, bodyH), const Radius.circular(10));
-
-    // Glass body
-    canvas.drawRRect(
-      bodyRect,
-      Paint()..color = Colors.white.withValues(alpha: 0.15),
-    );
-
-    // Liquid fill
-    canvas.save();
-    canvas.clipRRect(bodyRect);
-    canvas.drawRect(
-      Rect.fromLTWH(0, bodyY + bodyH * 0.15, w, bodyH * 0.85),
-      Paint()..color = color.withValues(alpha: 0.75),
-    );
-    canvas.restore();
-
-    // Border
-    canvas.drawRRect(
-      bodyRect,
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.45)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
-    );
-
-    // Highlight
-    canvas.drawLine(
-      Offset(w * 0.18, bodyY + 8),
-      Offset(w * 0.18, bodyY + bodyH * 0.55),
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.4)
-        ..strokeWidth = 3
-        ..strokeCap = StrokeCap.round,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _DecorBottlePainter oldDelegate) =>
-      oldDelegate.color != color;
 }

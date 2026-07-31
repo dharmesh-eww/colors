@@ -6,50 +6,64 @@ import '../binding/level_selection_binding.dart';
 import '../controller/level_selection_controller.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Level model (UI-only placeholder data)
+// Level Data Model (1000 levels)
 // ─────────────────────────────────────────────────────────────────────────────
 enum _LevelState { completed, playing, locked }
 
 class _LevelData {
   final int number;
   final _LevelState state;
-  final Color targetColor; // decorative only
-  final String difficulty;
+  final int stars; // 1 to 3 for completed, 0 for playing/locked
+  final Color targetColor;
 
   const _LevelData({
     required this.number,
     required this.state,
+    this.stars = 0,
     required this.targetColor,
-    required this.difficulty,
   });
 }
 
-// Placeholder level list — 20 levels
-final List<_LevelData> _levels = [
-  const _LevelData(number: 1,  state: _LevelState.completed, targetColor: Color(0xFF008080), difficulty: 'Easy'),
-  const _LevelData(number: 2,  state: _LevelState.completed, targetColor: Color(0xFFFF4500), difficulty: 'Easy'),
-  const _LevelData(number: 3,  state: _LevelState.completed, targetColor: Color(0xFF9400D3), difficulty: 'Easy'),
-  const _LevelData(number: 4,  state: _LevelState.completed, targetColor: Color(0xFF228B22), difficulty: 'Easy'),
-  const _LevelData(number: 5,  state: _LevelState.completed, targetColor: Color(0xFF1E90FF), difficulty: 'Easy'),
-  const _LevelData(number: 6,  state: _LevelState.completed, targetColor: Color(0xFFFF69B4), difficulty: 'Medium'),
-  const _LevelData(number: 7,  state: _LevelState.completed, targetColor: Color(0xFFFFD700), difficulty: 'Medium'),
-  const _LevelData(number: 8,  state: _LevelState.completed, targetColor: Color(0xFF8B4513), difficulty: 'Medium'),
-  const _LevelData(number: 9,  state: _LevelState.playing,   targetColor: Color(0xFF006400), difficulty: 'Medium'),
-  const _LevelData(number: 10, state: _LevelState.locked,    targetColor: Color(0xFFDC143C), difficulty: 'Medium'),
-  const _LevelData(number: 11, state: _LevelState.locked,    targetColor: Color(0xFF00CED1), difficulty: 'Hard'),
-  const _LevelData(number: 12, state: _LevelState.locked,    targetColor: Color(0xFF8A2BE2), difficulty: 'Hard'),
-  const _LevelData(number: 13, state: _LevelState.locked,    targetColor: Color(0xFF2F4F4F), difficulty: 'Hard'),
-  const _LevelData(number: 14, state: _LevelState.locked,    targetColor: Color(0xFFB8860B), difficulty: 'Hard'),
-  const _LevelData(number: 15, state: _LevelState.locked,    targetColor: Color(0xFF4169E1), difficulty: 'Hard'),
-  const _LevelData(number: 16, state: _LevelState.locked,    targetColor: Color(0xFF800000), difficulty: 'Expert'),
-  const _LevelData(number: 17, state: _LevelState.locked,    targetColor: Color(0xFF556B2F), difficulty: 'Expert'),
-  const _LevelData(number: 18, state: _LevelState.locked,    targetColor: Color(0xFF5F9EA0), difficulty: 'Expert'),
-  const _LevelData(number: 19, state: _LevelState.locked,    targetColor: Color(0xFFA0522D), difficulty: 'Expert'),
-  const _LevelData(number: 20, state: _LevelState.locked,    targetColor: Color(0xFF191970), difficulty: 'Expert'),
-];
+// Generate 1000 levels: 1-15 completed, 16 current playing, 17-1000 locked
+final List<_LevelData> _levels = List.generate(1000, (index) {
+  final levelNum = index + 1;
+  if (levelNum < 16) {
+    // Completed level with 2 or 3 stars
+    final stars = (levelNum % 3 == 0) ? 2 : 3;
+    final hue = (levelNum * 25.0) % 360.0;
+    final color = HSVColor.fromAHSV(1.0, hue, 0.75, 0.85).toColor();
+    return _LevelData(
+      number: levelNum,
+      state: _LevelState.completed,
+      stars: stars,
+      targetColor: color,
+    );
+  } else if (levelNum == 16) {
+    // Current on-going / active playing level
+    return const _LevelData(
+      number: 16,
+      state: _LevelState.playing,
+      stars: 0,
+      targetColor: Color(0xFF008080),
+    );
+  } else {
+    // Next locked levels
+    return _LevelData(
+      number: levelNum,
+      state: _LevelState.locked,
+      stars: 0,
+      targetColor: const Color(0xFF4A4A4A),
+    );
+  }
+});
+
+// Grid configuration
+const int _columns = 4;
+const int _rows = 5;
+const int _itemsPerPage = _columns * _rows; // 20 items per page
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Screen
+// Screen Root Widget
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ignore: must_be_immutable
@@ -79,28 +93,51 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
   late PaintBackgroundGame _bgGame;
   late AnimationController _glowController;
   late Animation<double> _glowAnimation;
+  late PageController _pageController;
+
+  int _currentPage = 0;
+  final int _totalPages = (_levels.length / _itemsPerPage).ceil();
 
   @override
   void initState() {
     super.initState();
     _bgGame = PaintBackgroundGame();
-    _glowController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-    _glowAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
-      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
-    );
+
+    // Pulse animation for current playing level highlight
+    _glowController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
+      ..repeat(reverse: true);
+
+    _glowAnimation = Tween<double>(
+      begin: 0.6,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _glowController, curve: Curves.easeInOut));
+
+    // Default to the page containing the current playing level (Level 16 -> Page 0)
+    final playingIndex = _levels.indexWhere((l) => l.state == _LevelState.playing);
+    if (playingIndex != -1) {
+      _currentPage = (playingIndex / _itemsPerPage).floor();
+    }
+    _pageController = PageController(initialPage: _currentPage);
   }
 
   @override
   void dispose() {
     _glowController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
-  int get _completedCount =>
-      _levels.where((l) => l.state == _LevelState.completed).length;
+  int get _completedCount => _levels.where((l) => l.state == _LevelState.completed).length;
+
+  void _goToPage(int page) {
+    if (page >= 0 && page < _totalPages) {
+      _pageController.animateToPage(
+        page,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,56 +145,67 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
       backgroundColor: const Color(0xFF8B5E3C),
       body: Stack(
         children: [
-          // ── Wood Background ───────────────────────────────────────────────
+          // ── Layer 1: Warm Wood Background ──────────────────────────────
           Positioned.fill(child: GameWidget(game: _bgGame)),
 
-          // ── Content ───────────────────────────────────────────────────────
+          // ── Layer 2: Content Layout ────────────────────────────────────
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Header ─────────────────────────────────────────────────
-                _Header(completedCount: _completedCount),
+                // ── Header Panel ──────────────────────────────────────────
+                _Header(completedCount: _completedCount, totalCount: _levels.length),
+
+                const SizedBox(height: 6),
+
+                // ── Total Progress Bar ────────────────────────────────────
+                _ProgressBar(completed: _completedCount, total: _levels.length),
 
                 const SizedBox(height: 8),
 
-                // ── Progress bar ────────────────────────────────────────────
-                _ProgressBar(
-                    completed: _completedCount, total: _levels.length),
-
-                const SizedBox(height: 12),
-
-                // ── Legend row ──────────────────────────────────────────────
+                // ── Legend Row (Completed, Playing, Locked) ───────────────
                 const _LegendRow(),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
 
-                // ── Levels Grid ─────────────────────────────────────────────
+                // ── Page View Grid with Silky Smooth Carousel Physics ──────
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: AnimatedBuilder(
-                      animation: _glowAnimation,
-                      builder: (context, child) {
-                        return GridView.builder(
-                          physics: const BouncingScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 4,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 0.82,
-                          ),
-                          itemCount: _levels.length,
-                          itemBuilder: (context, index) {
-                            return _LevelCard(
-                              level: _levels[index],
-                              glowValue: _glowAnimation.value,
-                              onTap: _levels[index].state !=
-                                      _LevelState.locked
-                                  ? () => widget.controller
-                                      .onLevelTapped(context, index)
-                                  : null,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: PageView.builder(
+                      controller: _pageController,
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      itemCount: _totalPages,
+                      onPageChanged: (page) {
+                        setState(() {
+                          _currentPage = page;
+                        });
+                      },
+                      itemBuilder: (context, pageIndex) {
+                        return AnimatedBuilder(
+                          animation: Listenable.merge([_pageController, _glowAnimation]),
+                          builder: (context, child) {
+                            // Smooth Page Scale & Fade Transition
+                            double pageOffset = 0.0;
+                            if (_pageController.position.haveDimensions) {
+                              pageOffset =
+                                  (_pageController.page ?? _currentPage.toDouble()) - pageIndex;
+                            } else {
+                              pageOffset = (_currentPage - pageIndex).toDouble();
+                            }
+
+                            final double scale = (1.0 - (pageOffset.abs() * 0.12)).clamp(0.88, 1.0);
+                            final double opacity = (1.0 - (pageOffset.abs() * 0.45)).clamp(
+                              0.35,
+                              1.0,
+                            );
+
+                            return Transform.scale(
+                              scale: scale,
+                              child: Opacity(
+                                opacity: opacity,
+                                child: _buildCustomGridPage(pageIndex),
+                              ),
                             );
                           },
                         );
@@ -166,7 +214,17 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
                   ),
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
+
+                // ── Page Navigation Controls ──────────────────────────────
+                _PageNavigationControls(
+                  currentPage: _currentPage,
+                  totalPages: _totalPages,
+                  onPrevPage: () => _goToPage(_currentPage - 1),
+                  onNextPage: () => _goToPage(_currentPage + 1),
+                ),
+
+                const SizedBox(height: 8),
               ],
             ),
           ),
@@ -174,20 +232,55 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
       ),
     );
   }
+
+  /// Custom 4x5 Grid implementation built using Column + Row + Expanded (No GridView)
+  /// Guarantees zero layout overflow on all device screen sizes.
+  Widget _buildCustomGridPage(int pageIndex) {
+    return Column(
+      children: List.generate(_rows, (rowIndex) {
+        return Expanded(
+          child: Row(
+            children: List.generate(_columns, (colIndex) {
+              final itemIndex = pageIndex * _itemsPerPage + rowIndex * _columns + colIndex;
+
+              if (itemIndex >= _levels.length) {
+                return const Expanded(child: SizedBox());
+              }
+
+              final level = _levels[itemIndex];
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(3.5),
+                  child: _LevelCard(
+                    level: level,
+                    glowValue: _glowAnimation.value,
+                    onTap: level.state != _LevelState.locked
+                        ? () => widget.controller.onLevelTapped(context, itemIndex)
+                        : null,
+                  ),
+                ),
+              );
+            }),
+          ),
+        );
+      }),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Header — warm cream panel
+// Header — Warm Cream Panel
 // ─────────────────────────────────────────────────────────────────────────────
 class _Header extends StatelessWidget {
   final int completedCount;
-  const _Header({required this.completedCount});
+  final int totalCount;
+  const _Header({required this.completedCount, required this.totalCount});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      margin: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFFF5DEB3), Color(0xFFE8C898)],
@@ -210,13 +303,12 @@ class _Header extends StatelessWidget {
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Container(
-              width: 38,
-              height: 38,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: const Color(0xFFE8C898),
                 shape: BoxShape.circle,
-                border:
-                    Border.all(color: const Color(0xFFD4A055), width: 1.5),
+                border: Border.all(color: const Color(0xFFD4A055), width: 1.5),
                 boxShadow: [
                   BoxShadow(
                     color: const Color(0xFF3B1E08).withValues(alpha: 0.2),
@@ -225,11 +317,7 @@ class _Header extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.chevron_left_rounded,
-                color: Color(0xFF5D4037),
-                size: 26,
-              ),
+              child: const Icon(Icons.chevron_left_rounded, color: Color(0xFF5D4037), size: 26),
             ),
           ),
 
@@ -239,27 +327,24 @@ class _Header extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'SELECT LEVEL',
+                  'LEVEL SELECT',
                   style: TextStyle(
                     color: Color(0xFF5D4037),
                     fontWeight: FontWeight.w900,
-                    fontSize: 17,
+                    fontSize: 16,
                     letterSpacing: 2.0,
                     shadows: [
-                      Shadow(
-                          color: Color(0x33000000),
-                          offset: Offset(0, 1),
-                          blurRadius: 2),
+                      Shadow(color: Color(0x33000000), offset: Offset(0, 1), blurRadius: 2),
                     ],
                   ),
                 ),
-                SizedBox(height: 2),
+                SizedBox(height: 1),
                 Text(
-                  'Color Lab · Mix & Match',
+                  'Color Lab · 1000 Levels',
                   style: TextStyle(
                     color: Color(0xFF8D6228),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -269,8 +354,7 @@ class _Header extends StatelessWidget {
 
           // Completion badge
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
@@ -281,7 +365,7 @@ class _Header extends StatelessWidget {
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFF4CAF50).withValues(alpha: 0.4),
-                  blurRadius: 8,
+                  blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
               ],
@@ -290,11 +374,11 @@ class _Header extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '$completedCount/${_levels.length}',
+                  '$completedCount/$totalCount',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
-                    fontSize: 14,
+                    fontSize: 12,
                   ),
                 ),
                 const Text(
@@ -302,7 +386,7 @@ class _Header extends StatelessWidget {
                   style: TextStyle(
                     color: Color(0xFFB9F6CA),
                     fontWeight: FontWeight.w700,
-                    fontSize: 9,
+                    fontSize: 8,
                     letterSpacing: 1.0,
                   ),
                 ),
@@ -316,7 +400,7 @@ class _Header extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Progress bar
+// Total Progress Bar
 // ─────────────────────────────────────────────────────────────────────────────
 class _ProgressBar extends StatelessWidget {
   final int completed;
@@ -327,7 +411,7 @@ class _ProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final double ratio = completed / total;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -336,16 +420,16 @@ class _ProgressBar extends StatelessWidget {
             child: Stack(
               children: [
                 Container(
-                  height: 8,
+                  height: 7,
                   decoration: BoxDecoration(
                     color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
                 FractionallySizedBox(
-                  widthFactor: ratio,
+                  widthFactor: ratio.clamp(0.01, 1.0),
                   child: Container(
-                    height: 8,
+                    height: 7,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFFFFD700), Color(0xFF4CAF50)],
@@ -363,12 +447,12 @@ class _ProgressBar extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
-            '${(ratio * 100).round()}% complete  ·  $completed of $total levels',
+            'Overall Progress: ${(ratio * 100).toStringAsFixed(1)}% ($completed / $total)',
             style: TextStyle(
-              color: const Color(0xFFF5DEB3).withValues(alpha: 0.75),
-              fontSize: 10,
+              color: const Color(0xFFF5DEB3).withValues(alpha: 0.8),
+              fontSize: 9.5,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.3,
             ),
@@ -380,7 +464,7 @@ class _ProgressBar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Legend row
+// Legend Row
 // ─────────────────────────────────────────────────────────────────────────────
 class _LegendRow extends StatelessWidget {
   const _LegendRow();
@@ -390,14 +474,11 @@ class _LegendRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _legendItem(
-            const Color(0xFF4CAF50), Icons.check_circle_rounded, 'Completed'),
-        const SizedBox(width: 18),
-        _legendItem(
-            const Color(0xFFFFD700), Icons.play_circle_rounded, 'Playing'),
-        const SizedBox(width: 18),
-        _legendItem(
-            const Color(0xFF8D6228), Icons.lock_rounded, 'Locked'),
+        _legendItem(const Color(0xFF4CAF50), Icons.star_rounded, 'Completed'),
+        const SizedBox(width: 16),
+        _legendItem(const Color(0xFFFFD700), Icons.play_circle_fill_rounded, 'Playing'),
+        const SizedBox(width: 16),
+        _legendItem(const Color(0xFF8D6228), Icons.lock_rounded, 'Locked'),
       ],
     );
   }
@@ -406,13 +487,13 @@ class _LegendRow extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: color, size: 13),
-        const SizedBox(width: 4),
+        Icon(icon, color: color, size: 12),
+        const SizedBox(width: 3),
         Text(
           label,
           style: TextStyle(
-            color: const Color(0xFFF5DEB3).withValues(alpha: 0.8),
-            fontSize: 10,
+            color: const Color(0xFFF5DEB3).withValues(alpha: 0.85),
+            fontSize: 9.5,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.3,
           ),
@@ -423,7 +504,114 @@ class _LegendRow extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Level Card
+// Page Navigation Controls (< Page X / Y >)
+// ─────────────────────────────────────────────────────────────────────────────
+class _PageNavigationControls extends StatelessWidget {
+  final int currentPage;
+  final int totalPages;
+  final VoidCallback onPrevPage;
+  final VoidCallback onNextPage;
+
+  const _PageNavigationControls({
+    required this.currentPage,
+    required this.totalPages,
+    required this.onPrevPage,
+    required this.onNextPage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool canGoPrev = currentPage > 0;
+    final bool canGoNext = currentPage < totalPages - 1;
+
+    final startLevel = currentPage * _itemsPerPage + 1;
+    final endLevel = (startLevel + _itemsPerPage - 1).clamp(1, 1000);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Previous Page Button
+          GestureDetector(
+            onTap: canGoPrev ? onPrevPage : null,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: canGoPrev
+                    ? const Color(0xFFD4A055)
+                    : const Color(0xFF5D3A1A).withValues(alpha: 0.4),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: canGoPrev
+                      ? const Color(0xFFFFD700)
+                      : const Color(0xFF8D6228).withValues(alpha: 0.3),
+                  width: 1.2,
+                ),
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 14,
+                color: canGoPrev ? const Color(0xFF3B1E08) : Colors.white24,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // Page Indicator Pill
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFF3B1E08).withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFD4A055), width: 1.2),
+            ),
+            child: Text(
+              'Page ${currentPage + 1} / $totalPages  ·  Levels $startLevel - $endLevel',
+              style: const TextStyle(
+                color: Color(0xFFF5DEB3),
+                fontWeight: FontWeight.w800,
+                fontSize: 10.5,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // Next Page Button
+          GestureDetector(
+            onTap: canGoNext ? onNextPage : null,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: canGoNext
+                    ? const Color(0xFFD4A055)
+                    : const Color(0xFF5D3A1A).withValues(alpha: 0.4),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: canGoNext
+                      ? const Color(0xFFFFD700)
+                      : const Color(0xFF8D6228).withValues(alpha: 0.3),
+                  width: 1.2,
+                ),
+              ),
+              child: Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: canGoNext ? const Color(0xFF3B1E08) : Colors.white24,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Level Item Card Widget — Matches _Header Cream Tan Wood Theme
 // ─────────────────────────────────────────────────────────────────────────────
 class _LevelCard extends StatelessWidget {
   final _LevelData level;
@@ -444,294 +632,214 @@ class _LevelCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           gradient: _cardGradient(isCompleted, isPlaying, isLocked),
           border: Border.all(
-            color: _borderColor(isCompleted, isPlaying, isLocked),
-            width: isPlaying ? 2.5 : 1.5,
+            color: _borderColor(isCompleted, isPlaying, isLocked, glowValue),
+            width: isPlaying ? 2.5 : 1.6,
           ),
-          boxShadow: _cardShadow(isCompleted, isPlaying, isLocked),
+          boxShadow: _cardShadow(isCompleted, isPlaying, isLocked, glowValue),
         ),
-        child: Stack(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── Difficulty color bar (top) ──────────────────────────────
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _difficultyColor(level.difficulty)
-                      .withValues(alpha: isLocked ? 0.3 : 0.85),
-                  borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(15)),
+            // ── Top: Target Color Swatch Dot ────────────────────────────
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: isLocked
+                    ? const Color(0xFF5D4037).withValues(alpha: 0.25)
+                    : level.targetColor,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isLocked
+                      ? Colors.transparent
+                      : const Color(0xFFD4A055).withValues(alpha: 0.6),
+                  width: 1.0,
                 ),
+                boxShadow: isLocked
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: level.targetColor.withValues(alpha: 0.5),
+                          blurRadius: 4,
+                        ),
+                      ],
               ),
             ),
 
-            // ── Main content ────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 8, 0, 6),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _CenterIcon(
-                    level: level,
-                    isCompleted: isCompleted,
-                    isPlaying: isPlaying,
-                    isLocked: isLocked,
-                    glowValue: glowValue,
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  Text(
-                    isLocked ? '???' : 'LVL ${level.number}',
-                    style: TextStyle(
-                      color: isLocked
-                          ? const Color(0xFFF5DEB3).withValues(alpha: 0.3)
-                          : isPlaying
-                              ? const Color(0xFFFFD700)
-                              : const Color(0xFFF5DEB3),
-                      fontWeight: FontWeight.w900,
-                      fontSize: 11,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-
-                  const SizedBox(height: 2),
-
-                  Text(
-                    isLocked ? 'LOCKED' : level.difficulty.toUpperCase(),
-                    style: TextStyle(
-                      color: isLocked
-                          ? const Color(0xFFF5DEB3).withValues(alpha: 0.2)
-                          : _difficultyColor(level.difficulty)
-                              .withValues(alpha: 0.9),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 8.5,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ],
+            // ── Center: Level Number ───────────────────────────────────
+            Text(
+              '${level.number}',
+              style: TextStyle(
+                color: isLocked
+                    ? const Color(0xFFF5DEB3).withValues(alpha: 0.35)
+                    : isPlaying
+                        ? const Color(0xFF3B1E08)
+                        : const Color(0xFF5D4037),
+                fontWeight: FontWeight.w900,
+                fontSize: level.number > 999 ? 12 : 14,
+                letterSpacing: 0.5,
+                shadows: isPlaying
+                    ? [
+                        Shadow(
+                          color: const Color(0xFFFFD700).withValues(alpha: 0.8),
+                          blurRadius: 6,
+                        ),
+                      ]
+                    : (isCompleted
+                        ? const [
+                            Shadow(
+                              color: Color(0x22000000),
+                              offset: Offset(0, 1),
+                              blurRadius: 1,
+                            ),
+                          ]
+                        : null),
               ),
             ),
 
-            // ── PLAYING ribbon ──────────────────────────────────────────
-            if (isPlaying)
-              Positioned(
-                top: 7,
-                right: 6,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFFD700), Color(0xFFFF8F00)],
-                    ),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text(
-                    '▶',
-                    style: TextStyle(
-                      color: Color(0xFF3B1E08),
-                      fontSize: 7,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ),
+            // ── Bottom: Status Element (Stars, Playing Badge, or Lock) ──
+            _buildStatusFooter(isCompleted, isPlaying, isLocked),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildStatusFooter(bool isCompleted, bool isPlaying, bool isLocked) {
+    if (isCompleted) {
+      // 1 to 3 Golden Stars matching _Header wood palette
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(3, (starIndex) {
+          final bool active = starIndex < level.stars;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 0.5),
+            child: Icon(
+              Icons.star_rounded,
+              size: 12,
+              color: active ? const Color(0xFFE67E22) : const Color(0x335D4037),
+            ),
+          );
+        }),
+      );
+    } else if (isPlaying) {
+      // Active Playing Badge matching _Header theme
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFFFFD700).withValues(alpha: glowValue),
+              const Color(0xFFFF8F00).withValues(alpha: glowValue * 0.85),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFFD700).withValues(alpha: glowValue * 0.6),
+              blurRadius: 6,
+            ),
+          ],
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.play_arrow_rounded,
+              size: 10,
+              color: Color(0xFF3B1E08),
+            ),
+            SizedBox(width: 1),
+            Text(
+              'PLAY',
+              style: TextStyle(
+                color: Color(0xFF3B1E08),
+                fontSize: 7.5,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Locked Status Icon
+      return Icon(
+        Icons.lock_rounded,
+        size: 11,
+        color: const Color(0xFFF5DEB3).withValues(alpha: 0.35),
+      );
+    }
+  }
+
   LinearGradient _cardGradient(
       bool isCompleted, bool isPlaying, bool isLocked) {
-    if (isCompleted) {
-      return const LinearGradient(
-        colors: [Color(0xFF4E342E), Color(0xFF3E2723)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
-    }
     if (isPlaying) {
+      // Bright active parchment gradient (matching _Header theme)
       return const LinearGradient(
-        colors: [Color(0xFF5D3A1A), Color(0xFF3E2723)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+        colors: [Color(0xFFFFF8E1), Color(0xFFFFE0B2)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
       );
     }
+    if (isCompleted) {
+      // Warm cream tan parchment gradient (EXACTLY matching _Header)
+      return const LinearGradient(
+        colors: [Color(0xFFF5DEB3), Color(0xFFE8C898)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      );
+    }
+    // Locked — semi-transparent dark wood tan tint
     return LinearGradient(
       colors: [
-        const Color(0xFF3B1E08).withValues(alpha: 0.65),
-        const Color(0xFF2C1600).withValues(alpha: 0.65),
+        const Color(0xFF4A2F17).withValues(alpha: 0.55),
+        const Color(0xFF3B1E08).withValues(alpha: 0.55),
       ],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
     );
   }
 
-  Color _borderColor(bool isCompleted, bool isPlaying, bool isLocked) {
-    if (isCompleted) return const Color(0xFF4CAF50).withValues(alpha: 0.65);
-    if (isPlaying) return const Color(0xFFFFD700).withValues(alpha: glowValue);
-    return const Color(0xFFD4A055).withValues(alpha: 0.2);
+  Color _borderColor(
+      bool isCompleted, bool isPlaying, bool isLocked, double glow) {
+    if (isPlaying) {
+      return const Color(0xFFFFD700).withValues(alpha: glow);
+    }
+    if (isCompleted) {
+      return const Color(0xFFD4A055); // Matching _Header border color
+    }
+    return const Color(0xFFD4A055).withValues(alpha: 0.22);
   }
 
   List<BoxShadow> _cardShadow(
-      bool isCompleted, bool isPlaying, bool isLocked) {
+      bool isCompleted, bool isPlaying, bool isLocked, double glow) {
     if (isPlaying) {
       return [
         BoxShadow(
-          color: const Color(0xFFFFD700).withValues(alpha: glowValue * 0.55),
-          blurRadius: 16,
-          spreadRadius: 2,
+          color: const Color(0xFFFFD700).withValues(alpha: glow * 0.5),
+          blurRadius: 12,
+          spreadRadius: 1,
         ),
+      ];
+    }
+    if (isCompleted) {
+      return [
         BoxShadow(
-          color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
+          color: const Color(0xFF3B1E08).withValues(alpha: 0.25),
           blurRadius: 6,
           offset: const Offset(0, 3),
         ),
       ];
     }
-    if (isCompleted) {
-      return [
-        BoxShadow(
-          color: const Color(0xFF4CAF50).withValues(alpha: 0.2),
-          blurRadius: 8,
-          offset: const Offset(0, 3),
-        ),
-      ];
-    }
-    return [
-      BoxShadow(
-        color: const Color(0xFF000000).withValues(alpha: 0.25),
-        blurRadius: 4,
-        offset: const Offset(0, 2),
-      ),
-    ];
-  }
-
-  Color _difficultyColor(String difficulty) {
-    switch (difficulty) {
-      case 'Easy':   return const Color(0xFF4CAF50);
-      case 'Medium': return const Color(0xFFFFB300);
-      case 'Hard':   return const Color(0xFFFF5722);
-      case 'Expert': return const Color(0xFFF44336);
-      default:       return const Color(0xFF4CAF50);
-    }
+    return [];
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Center icon for each card state
-// ─────────────────────────────────────────────────────────────────────────────
-class _CenterIcon extends StatelessWidget {
-  final _LevelData level;
-  final bool isCompleted;
-  final bool isPlaying;
-  final bool isLocked;
-  final double glowValue;
-
-  const _CenterIcon({
-    required this.level,
-    required this.isCompleted,
-    required this.isPlaying,
-    required this.isLocked,
-    required this.glowValue,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // ── Locked ──────────────────────────────────────────────────────────────
-    if (isLocked) {
-      return Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: const Color(0xFF3B1E08).withValues(alpha: 0.5),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: const Color(0xFFD4A055).withValues(alpha: 0.2),
-            width: 1.5,
-          ),
-        ),
-        child: Icon(
-          Icons.lock_rounded,
-          color: const Color(0xFFF5DEB3).withValues(alpha: 0.28),
-          size: 18,
-        ),
-      );
-    }
-
-    // ── Completed ────────────────────────────────────────────────────────────
-    if (isCompleted) {
-      return Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: level.targetColor,
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF4CAF50), width: 2.0),
-              boxShadow: [
-                BoxShadow(
-                  color: level.targetColor.withValues(alpha: 0.45),
-                  blurRadius: 8,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFF4CAF50).withValues(alpha: 0.65),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.check_rounded, color: Colors.white, size: 20),
-          ),
-        ],
-      );
-    }
-
-    // ── Playing ──────────────────────────────────────────────────────────────
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            const Color(0xFFFFD700).withValues(alpha: glowValue * 0.9),
-            const Color(0xFFFF8F00).withValues(alpha: glowValue * 0.45),
-          ],
-          stops: const [0.35, 1.0],
-        ),
-        border: Border.all(
-          color: const Color(0xFFFFD700).withValues(alpha: glowValue),
-          width: 2.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFFD700).withValues(alpha: glowValue * 0.6),
-            blurRadius: 14,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Icon(
-        Icons.play_arrow_rounded,
-        color: const Color(0xFF3B1E08).withValues(alpha: 0.9),
-        size: 24,
-      ),
-    );
-  }
-}

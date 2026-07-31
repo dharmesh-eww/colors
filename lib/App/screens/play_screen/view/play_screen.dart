@@ -49,7 +49,13 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
     super.initState();
     _flameGame = PaintMixingGame();
     _bgGame = PaintBackgroundGame();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _calculateTileArea());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _calculateTileArea();
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is int) {
+        widget.controller.loadLevel(args);
+      }
+    });
   }
 
   void _calculateTileArea() {
