@@ -37,7 +37,6 @@ const int _itemsPerPage = _columns * _rows; // 20 items per page
 // Screen Root Widget
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ignore: must_be_immutable
 class LevelSelectionScreen extends StatekitView<LevelSelectionController>
     implements LevelSelectionBinding {
   LevelSelectionScreen({super.key, super.tag});

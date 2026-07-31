@@ -59,10 +59,7 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
         widget.flameGame!.startLiquidPour(
           bottleNozzlePos: Vector2(_currentDragGlobalPos.dx, _currentDragGlobalPos.dy),
           color: widget.bottle.color,
-          targetTilePos: Vector2(
-            widget.mixingTileArea.center.dx,
-            widget.mixingTileArea.center.dy,
-          ),
+          targetTilePos: Vector2(widget.mixingTileArea.center.dx, widget.mixingTileArea.center.dy),
         );
       }
 
@@ -125,25 +122,40 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
         final double fillRatio = (availableMl / 100.0).clamp(0.0, 1.0);
 
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeInOutCubic,
           transform: isTilted
               ? (Matrix4.identity()
-                ..rotateZ(-pi * 0.52)
-                ..multiply(Matrix4.diagonal3Values(1.15, 1.15, 1.0)))
+                  ..rotateZ(-pi * 0.52)
+                  ..multiply(Matrix4.diagonal3Values(1.18, 1.18, 1.0)))
               : (isDragging
-                  ? (Matrix4.identity()..multiply(Matrix4.diagonal3Values(1.1, 1.1, 1.0)))
-                  : Matrix4.identity()),
+                    ? (Matrix4.identity()..multiply(Matrix4.diagonal3Values(1.12, 1.12, 1.0)))
+                    : Matrix4.identity()),
           transformAlignment: Alignment.topCenter,
-          child: SizedBox(
-            width: 50,
-            height: 72,
-            child: CustomPaint(
-              painter: _InkBottlePainter(
-                color: bottle.color,
-                fillRatio: fillRatio,
-                isWhite: bottle.type == PaintType.white,
-                isBlack: bottle.type == PaintType.black,
-                isUncorked: isTilted,
+          child: Container(
+            decoration: isDragging
+                ? BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: bottle.color.withValues(alpha: 0.45),
+                        blurRadius: 18,
+                        spreadRadius: 3,
+                      ),
+                    ],
+                  )
+                : null,
+            child: SizedBox(
+              width: 52,
+              height: 75,
+              child: CustomPaint(
+                painter: _InkBottlePainter(
+                  color: bottle.color,
+                  fillRatio: fillRatio,
+                  isWhite: bottle.type == PaintType.white,
+                  isBlack: bottle.type == PaintType.black,
+                  isUncorked: isTilted,
+                ),
               ),
             ),
           ),
@@ -164,120 +176,128 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
 
     return GestureDetector(
       onTap: widget.onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // ── Draggable Ink Bottle ──────────────────────────────────────
-            Draggable<PaintType>(
-              data: bottle.type,
-              feedback: _buildInkBottle(isDragging: true, isTilted: _isOverTile),
-              childWhenDragging: Opacity(
-                opacity: 0.22,
+      behavior: HitTestBehavior.opaque,
+      child: Transform.translate(
+        offset: Offset(0, widget.isSelected ? -6 : 0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // ── Draggable Ink Bottle ──────────────────────────────────────
+              Draggable<PaintType>(
+                data: bottle.type,
+                feedback: Material(
+                  color: Colors.transparent,
+                  child: _buildInkBottle(isDragging: true, isTilted: _isOverTile),
+                ),
+                childWhenDragging: Opacity(
+                  opacity: 0.20,
+                  child: _buildInkBottle(isDragging: false, isTilted: false),
+                ),
+                onDragStarted: () {
+                  widget.onTap();
+                },
+                onDragUpdate: (details) {
+                  _currentDragGlobalPos = details.globalPosition;
+                  final bool isCurrentlyOverTile = widget.mixingTileArea.contains(
+                    _currentDragGlobalPos,
+                  );
+
+                  if (isCurrentlyOverTile != _isOverTile) {
+                    setState(() {
+                      _isOverTile = isCurrentlyOverTile;
+                    });
+                    if (isCurrentlyOverTile) {
+                      _startPouring();
+                    } else {
+                      _stopPouring();
+                    }
+                  } else if (isCurrentlyOverTile && widget.flameGame != null) {
+                    widget.flameGame!.updateLiquidPour(
+                      bottleNozzlePos: Vector2(_currentDragGlobalPos.dx, _currentDragGlobalPos.dy),
+                      targetTilePos: Vector2(
+                        widget.mixingTileArea.center.dx,
+                        widget.mixingTileArea.center.dy,
+                      ),
+                    );
+                  }
+                },
+                onDragEnd: (details) => _resetDrag(),
+                onDraggableCanceled: (velocity, offset) => _resetDrag(),
                 child: _buildInkBottle(isDragging: false, isTilted: false),
               ),
-              onDragStarted: () {
-                widget.onTap();
-              },
-              onDragUpdate: (details) {
-                _currentDragGlobalPos = details.globalPosition;
-                final bool isCurrentlyOverTile =
-                    widget.mixingTileArea.contains(_currentDragGlobalPos);
 
-                if (isCurrentlyOverTile != _isOverTile) {
-                  setState(() {
-                    _isOverTile = isCurrentlyOverTile;
-                  });
-                  if (isCurrentlyOverTile) {
-                    _startPouring();
-                  } else {
-                    _stopPouring();
-                  }
-                } else if (isCurrentlyOverTile && widget.flameGame != null) {
-                  widget.flameGame!.updateLiquidPour(
-                    bottleNozzlePos: Vector2(_currentDragGlobalPos.dx, _currentDragGlobalPos.dy),
-                    targetTilePos: Vector2(
-                      widget.mixingTileArea.center.dx,
-                      widget.mixingTileArea.center.dy,
-                    ),
-                  );
-                }
-              },
-              onDragEnd: (details) => _resetDrag(),
-              onDraggableCanceled: (velocity, offset) => _resetDrag(),
-              child: _buildInkBottle(isDragging: false, isTilted: false),
-            ),
+              const SizedBox(height: 5),
 
-            const SizedBox(height: 5),
-
-            // ── Color Name Label ──────────────────────────────────────────
-            Text(
-              bottle.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: isBlack
-                    ? const Color(0xFF4E342E)
-                    : (isWhite ? const Color(0xFF6D4C41) : labelColor),
-                fontWeight: FontWeight.w900,
-                fontSize: 11,
-                letterSpacing: 0.3,
-                shadows: const [
-                  Shadow(color: Color(0x44000000), offset: Offset(0, 1), blurRadius: 2),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 2),
-
-            // ── Hex Code Badge ────────────────────────────────────────────
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: widget.isSelected
-                    ? const Color(0xFFFFD700).withValues(alpha: 0.25)
-                    : const Color(0xFF3B1E08).withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: widget.isSelected
-                      ? const Color(0xFFFFD700)
-                      : const Color(0xFFBCAAA4).withValues(alpha: 0.5),
-                  width: 1.0,
-                ),
-              ),
-              child: Text(
-                bottle.hexCode,
+              // ── Color Name Label ──────────────────────────────────────────
+              Text(
+                bottle.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: isBlack
-                      ? const Color(0xFF5D4037)
-                      : (isWhite
-                          ? const Color(0xFF795548)
-                          : labelColor.withValues(alpha: 0.9)),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 9,
-                  fontFamily: 'monospace',
+                      ? const Color(0xFF4E342E)
+                      : (isWhite ? const Color(0xFF6D4C41) : labelColor),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 11,
+                  letterSpacing: 0.3,
+                  shadows: const [
+                    Shadow(color: Color(0x44000000), offset: Offset(0, 1), blurRadius: 2),
+                  ],
                 ),
               ),
-            ),
 
-            const SizedBox(height: 2),
+              const SizedBox(height: 2),
 
-            // ── Selection indicator dot ───────────────────────────────────
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: widget.isSelected ? 22 : 0,
-              height: 3,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFD700),
-                borderRadius: BorderRadius.circular(2),
+              // ── Hex Code Badge ────────────────────────────────────────────
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: widget.isSelected
+                      ? const Color(0xFFFFD700).withValues(alpha: 0.3)
+                      : const Color(0xFF3B1E08).withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: widget.isSelected
+                        ? const Color(0xFFFFD700)
+                        : const Color(0xFFBCAAA4).withValues(alpha: 0.5),
+                    width: 1.0,
+                  ),
+                ),
+                child: Text(
+                  bottle.hexCode,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isBlack
+                        ? const Color(0xFF5D4037)
+                        : (isWhite ? const Color(0xFF795548) : labelColor.withValues(alpha: 0.9)),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 9,
+                    fontFamily: 'monospace',
+                  ),
+                ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 2),
+
+              // ── Selection indicator dot ───────────────────────────────────
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                width: widget.isSelected ? 22 : 0,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFD700),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -421,7 +441,9 @@ class _InkBottlePainter extends CustomPainter {
       Paint()
         ..color = isWhite
             ? const Color(0xFFEEEEEE).withValues(alpha: 0.9)
-            : (isBlack ? const Color(0xFF1A1A1A).withValues(alpha: 0.95) : color.withValues(alpha: 0.85))
+            : (isBlack
+                  ? const Color(0xFF1A1A1A).withValues(alpha: 0.95)
+                  : color.withValues(alpha: 0.85))
         ..style = PaintingStyle.fill,
     );
 

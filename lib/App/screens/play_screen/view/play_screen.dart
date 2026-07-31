@@ -10,9 +10,7 @@ import '../../../widgets/mixing_tile_widget.dart';
 import '../binding/play_screen_binding.dart';
 import '../controller/play_screen_controller.dart';
 
-// ignore: must_be_immutable
-class PlayScreen extends StatekitView<PlayScreenController>
-    implements PlayScreenBinding {
+class PlayScreen extends StatekitView<PlayScreenController> implements PlayScreenBinding {
   PlayScreen({super.key, super.tag});
 
   @override
@@ -65,14 +63,12 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
   }
 
   void _calculateTileArea() {
-    final RenderBox? renderBox =
-        _mixingTileKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? renderBox = _mixingTileKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox != null) {
       final position = renderBox.localToGlobal(Offset.zero);
       final size = renderBox.size;
       setState(() {
-        _mixingTileArea =
-            Rect.fromLTWH(position.dx, position.dy, size.width, size.height);
+        _mixingTileArea = Rect.fromLTWH(position.dx, position.dy, size.width, size.height);
       });
     }
   }
@@ -132,8 +128,7 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                       mixingTileArea: _mixingTileArea,
                       flameGame: _flameGame,
                       onTap: (type) => ctrl.selectColorType(type),
-                      onPourContinuous: (type, ml, pos) =>
-                          ctrl.pourPaintType(type, ml),
+                      onPourContinuous: (type, ml, pos) => ctrl.pourPaintType(type, ml),
                       onPourEnd: () => ctrl.checkCompletionOnPourEnd(),
                     ),
                   ],
@@ -198,31 +193,8 @@ class _TargetColorHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Back button
-          GestureDetector(
-            onTap: onBack,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8C898),
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFD4A055), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF3B1E08).withValues(alpha: 0.25),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.chevron_left_rounded,
-                color: Color(0xFF5D4037),
-                size: 24,
-              ),
-            ),
-          ),
+          // Back button with press animation
+          _AnimatedIconButton(icon: Icons.chevron_left_rounded, iconSize: 24, onTap: onBack),
 
           // Target Color label + timer + hex badge (centered)
           Expanded(
@@ -240,11 +212,7 @@ class _TargetColorHeader extends StatelessWidget {
                         fontSize: 12,
                         letterSpacing: 1.4,
                         shadows: [
-                          Shadow(
-                            color: Color(0x33000000),
-                            offset: Offset(0, 1),
-                            blurRadius: 2,
-                          ),
+                          Shadow(color: Color(0x33000000), offset: Offset(0, 1), blurRadius: 2),
                         ],
                       ),
                     ),
@@ -258,11 +226,7 @@ class _TargetColorHeader extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(
-                      Icons.timer_outlined,
-                      size: 14,
-                      color: Color(0xFF5D4037),
-                    ),
+                    const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF5D4037)),
                     const SizedBox(width: 3),
                     Text(
                       formattedTime,
@@ -273,11 +237,7 @@ class _TargetColorHeader extends StatelessWidget {
                         fontFamily: 'monospace',
                         letterSpacing: 1.0,
                         shadows: [
-                          Shadow(
-                            color: Color(0x33000000),
-                            offset: Offset(0, 1),
-                            blurRadius: 2,
-                          ),
+                          Shadow(color: Color(0x33000000), offset: Offset(0, 1), blurRadius: 2),
                         ],
                       ),
                     ),
@@ -291,10 +251,7 @@ class _TargetColorHeader extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: targetColor,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      width: 1.5,
-                    ),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         color: targetColor.withValues(alpha: 0.5),
@@ -312,10 +269,7 @@ class _TargetColorHeader extends StatelessWidget {
                       letterSpacing: 1.5,
                       fontFamily: 'monospace',
                       shadows: const [
-                        Shadow(
-                            color: Color(0x55000000),
-                            offset: Offset(0, 1),
-                            blurRadius: 3),
+                        Shadow(color: Color(0x55000000), offset: Offset(0, 1), blurRadius: 3),
                       ],
                     ),
                   ),
@@ -324,31 +278,8 @@ class _TargetColorHeader extends StatelessWidget {
             ),
           ),
 
-          // Reset button
-          GestureDetector(
-            onTap: onReset,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8C898),
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFD4A055), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF3B1E08).withValues(alpha: 0.25),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.refresh_rounded,
-                color: Color(0xFF5D4037),
-                size: 20,
-              ),
-            ),
-          ),
+          // Reset button with press animation
+          _AnimatedIconButton(icon: Icons.refresh_rounded, iconSize: 20, onTap: onReset),
         ],
       ),
     );
@@ -357,6 +288,53 @@ class _TargetColorHeader extends StatelessWidget {
   Color _contrastColor(Color bg) {
     final double luminance = bg.computeLuminance();
     return luminance > 0.4 ? const Color(0xFF3B1E08) : Colors.white;
+  }
+}
+
+class _AnimatedIconButton extends StatefulWidget {
+  final IconData icon;
+  final double iconSize;
+  final VoidCallback onTap;
+
+  const _AnimatedIconButton({required this.icon, required this.iconSize, required this.onTap});
+
+  @override
+  State<_AnimatedIconButton> createState() => _AnimatedIconButtonState();
+}
+
+class _AnimatedIconButtonState extends State<_AnimatedIconButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.88 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8C898),
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFD4A055), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF3B1E08).withValues(alpha: 0.25),
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(widget.icon, color: const Color(0xFF5D4037), size: widget.iconSize),
+        ),
+      ),
+    );
   }
 }
 
@@ -389,12 +367,14 @@ class _WoodenShelf extends StatelessWidget {
       children: [
         // ── Bottle Row ──────────────────────────────────────────────────────
         SizedBox(
-          height: 130,
+          height: 138,
+          width: double.maxFinite,
           child: Center(
             child: ListView.builder(
               shrinkWrap: true,
+              physics: const BouncingScrollPhysics(),
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               itemCount: bottles.length,
               itemBuilder: (context, index) {
                 final bottle = bottles[index];
@@ -426,13 +406,7 @@ class _WoodenShelf extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x66000000),
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ],
+            boxShadow: [BoxShadow(color: Color(0x66000000), blurRadius: 8, offset: Offset(0, 4))],
           ),
           child: CustomPaint(painter: _ShelfGrainPainter()),
         ),
@@ -530,10 +504,7 @@ class _VictoryOverlay extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.4,
                     shadows: [
-                      Shadow(
-                          color: Color(0x44000000),
-                          offset: Offset(0, 2),
-                          blurRadius: 4),
+                      Shadow(color: Color(0x44000000), offset: Offset(0, 2), blurRadius: 4),
                     ],
                   ),
                 ),
@@ -546,8 +517,7 @@ class _VictoryOverlay extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: const Color(0xFF00C853).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
-                        border:
-                            Border.all(color: const Color(0xFF00C853), width: 1.5),
+                        border: Border.all(color: const Color(0xFF00C853), width: 1.5),
                       ),
                       child: Text(
                         'Accuracy: ${accuracy.toStringAsFixed(1)}%',
@@ -564,17 +534,12 @@ class _VictoryOverlay extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: const Color(0xFF5D4037).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
-                        border:
-                            Border.all(color: const Color(0xFF5D4037), width: 1.5),
+                        border: Border.all(color: const Color(0xFF5D4037), width: 1.5),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.timer_outlined,
-                            size: 16,
-                            color: Color(0xFF5D4037),
-                          ),
+                          const Icon(Icons.timer_outlined, size: 16, color: Color(0xFF5D4037)),
                           const SizedBox(width: 4),
                           Text(
                             formattedTime,
@@ -594,10 +559,7 @@ class _VictoryOverlay extends StatelessWidget {
                 const SizedBox(
                   width: 26,
                   height: 26,
-                  child: CircularProgressIndicator(
-                    color: Color(0xFFD4A055),
-                    strokeWidth: 3,
-                  ),
+                  child: CircularProgressIndicator(color: Color(0xFFD4A055), strokeWidth: 3),
                 ),
                 const SizedBox(height: 8),
                 const Text(

@@ -5,7 +5,6 @@ import '../../../game/paint_background_game.dart';
 import '../binding/home_screen_binding.dart';
 import '../controller/home_screen_controller.dart';
 
-// ignore: must_be_immutable
 class HomeScreen extends StatekitView<HomeScreenController> implements HomeScreenBinding {
   HomeScreen({super.key, super.tag});
 
