@@ -127,26 +127,18 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 // ── Unity-Style Wooden Slice Difficulty Menu ─────────────
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                     child: _UnityWoodenDifficultyMenu(
                       onDifficultyTap: (tier) =>
                           widget.controller.onDifficultyClicked(context, tier),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // ── PLAY Button ───────────────────────────────────────────
-                _PlayButtonWidget(
-                  onTap: () => widget.controller.playButtonClicked(context),
-                  pulseAnimation: _scaleAnimation,
                 ),
 
                 const SizedBox(height: 12),
@@ -616,6 +608,7 @@ class _UnityWoodenDifficultyMenu extends StatelessWidget {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        spacing: 16,
         children: [
           // Header Label
           Row(
@@ -639,13 +632,10 @@ class _UnityWoodenDifficultyMenu extends StatelessWidget {
               const Icon(Icons.military_tech_rounded, size: 18, color: Color(0xFFFFD700)),
             ],
           ),
-          const SizedBox(height: 10),
+          // const SizedBox(height: 10),
           // Vertical Unity Wooden Slice Buttons Stack
           ...tiers.map(
-            (tier) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _UnityWoodenSliceButton(tier: tier, onTap: () => onDifficultyTap(tier)),
-            ),
+            (tier) => _UnityWoodenSliceButton(tier: tier, onTap: () => onDifficultyTap(tier)),
           ),
         ],
       ),
