@@ -5,8 +5,8 @@ import 'package:statekit/statekit.dart';
 import '../../../core/puzzle/puzzle_generator.dart';
 import '../../../core/services/level_storage_service.dart';
 import '../../../game/paint_background_game.dart';
-import '../binding/level_selection_binding.dart';
-import '../controller/level_selection_controller.dart';
+import '../binding/level_selection_page.dart';
+import '../controller/level_selection_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Level Data Model
@@ -37,9 +37,9 @@ const int _itemsPerPage = _columns * _rows; // 20 items per page
 // Screen Root Widget
 // ─────────────────────────────────────────────────────────────────────────────
 
-class LevelSelectionScreen extends StatekitView<LevelSelectionController>
+class LevelSelectionPage extends StatekitView<LevelSelectionController>
     implements LevelSelectionBinding {
-  LevelSelectionScreen({super.key, super.tag});
+  LevelSelectionPage({super.key, super.tag});
 
   @override
   Widget build(BuildContext context) {
@@ -191,17 +191,24 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
                           builder: (context, child) {
                             double pageOffset = 0.0;
                             if (_pageController.position.haveDimensions) {
-                              pageOffset = (_pageController.page ?? _currentPage.toDouble()) - pageIndex;
+                              pageOffset =
+                                  (_pageController.page ?? _currentPage.toDouble()) - pageIndex;
                             } else {
                               pageOffset = (_currentPage - pageIndex).toDouble();
                             }
 
                             final double scale = (1.0 - (pageOffset.abs() * 0.12)).clamp(0.88, 1.0);
-                            final double opacity = (1.0 - (pageOffset.abs() * 0.45)).clamp(0.35, 1.0);
+                            final double opacity = (1.0 - (pageOffset.abs() * 0.45)).clamp(
+                              0.35,
+                              1.0,
+                            );
 
                             return Transform.scale(
                               scale: scale,
-                              child: Opacity(opacity: opacity, child: _buildCustomGridPage(pageIndex)),
+                              child: Opacity(
+                                opacity: opacity,
+                                child: _buildCustomGridPage(pageIndex),
+                              ),
                             );
                           },
                         );
@@ -299,7 +306,7 @@ class _Header extends StatelessWidget {
         children: [
           // Back button
           GestureDetector(
-            onTap: () => Navigator.pop(context),
+            // onTap: () => Navigator.pop(context),
             child: Container(
               width: 36,
               height: 36,
@@ -936,4 +943,3 @@ class _HeroPotionBottlePainter extends CustomPainter {
 // ─────────────────────────────────────────────────────────────────────────────
 // Mode Segmented Switcher (Difficulty Modes vs 1000 Levels)
 // ─────────────────────────────────────────────────────────────────────────────
-
