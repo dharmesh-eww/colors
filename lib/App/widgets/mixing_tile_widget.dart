@@ -17,17 +17,14 @@ class MixingTileWidget extends StatefulWidget {
   State<MixingTileWidget> createState() => _MixingTileWidgetState();
 }
 
-class _MixingTileWidgetState extends State<MixingTileWidget>
-    with SingleTickerProviderStateMixin {
+class _MixingTileWidgetState extends State<MixingTileWidget> with SingleTickerProviderStateMixin {
   late AnimationController _waveController;
 
   @override
   void initState() {
     super.initState();
-    _waveController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2200),
-    )..repeat();
+    _waveController = AnimationController(vsync: this, duration: const Duration(milliseconds: 2200))
+      ..repeat();
   }
 
   @override
@@ -58,9 +55,7 @@ class _MixingTileWidgetState extends State<MixingTileWidget>
                 fontWeight: FontWeight.w900,
                 fontSize: 16,
                 letterSpacing: 0.8,
-                shadows: [
-                  Shadow(color: Color(0xFF000000), offset: Offset(0, 1), blurRadius: 4),
-                ],
+                shadows: [Shadow(color: Color(0xFF000000), offset: Offset(0, 1), blurRadius: 4)],
               ),
             ),
 
@@ -77,20 +72,12 @@ class _MixingTileWidgetState extends State<MixingTileWidget>
                   Positioned(
                     bottom: 0,
                     child: _GlowingPlatform(
-                      color: isWhiteLiquid
-                          ? const Color(0xFFFFD700)
-                          : widget.mixedColor,
+                      color: isWhiteLiquid ? const Color(0xFFFFD700) : widget.mixedColor,
                     ),
                   ),
 
                   // Cylindrical glass chamber behind beaker
-                  Positioned(
-                    top: 0,
-                    left: 20,
-                    right: 20,
-                    bottom: 22,
-                    child: _GlassChamber(),
-                  ),
+                  Positioned(top: 0, left: 20, right: 20, bottom: 22, child: _GlassChamber()),
 
                   // Beaker with liquid (DragTarget key area)
                   Positioned(
@@ -108,8 +95,6 @@ class _MixingTileWidgetState extends State<MixingTileWidget>
                       ),
                     ),
                   ),
-
-
                 ],
               ),
             ),
@@ -119,7 +104,6 @@ class _MixingTileWidgetState extends State<MixingTileWidget>
     );
   }
 }
-
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Glowing circular platform below beaker
@@ -136,19 +120,11 @@ class _GlowingPlatform extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(50),
         gradient: RadialGradient(
-          colors: [
-            color.withValues(alpha: 0.9),
-            color.withValues(alpha: 0.35),
-            Colors.transparent,
-          ],
+          colors: [color.withValues(alpha: 0.9), color.withValues(alpha: 0.35), Colors.transparent],
           stops: const [0.0, 0.5, 1.0],
         ),
         boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.7),
-            blurRadius: 22,
-            spreadRadius: 4,
-          ),
+          BoxShadow(color: color.withValues(alpha: 0.7), blurRadius: 22, spreadRadius: 4),
         ],
       ),
       child: Center(
@@ -181,86 +157,151 @@ class _GlassChamberPainter extends CustomPainter {
     final double w = size.width;
     final double h = size.height;
 
-    // Chamber body — rounded rect glass tube
-    final chamberRect =
-        RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, w, h), const Radius.circular(22));
+    // ── 1. Glass Chamber Body (rounded rect glass tube) ──────────────────────
+    final chamberRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 4, w, h - 4),
+      const Radius.circular(22),
+    );
 
-    // Glass body fill (very translucent)
+    // Glass body fill (very translucent crystal glass)
     canvas.drawRRect(
       chamberRect,
       Paint()
-        ..color = const Color(0xFFB0C4DE).withValues(alpha: 0.18)
+        ..color = const Color(0xFFD6EAF8).withValues(alpha: 0.16)
         ..style = PaintingStyle.fill,
     );
 
-    // Glass border
+    // Glass border outline
     canvas.drawRRect(
       chamberRect,
       Paint()
-        ..color = const Color(0xFFD0E8FF).withValues(alpha: 0.55)
+        ..color = const Color(0xFFE3F2FD).withValues(alpha: 0.5)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5,
+        ..strokeWidth = 2.2,
     );
 
-    // Inner rim highlights (left and right strips)
+    // Inner rim highlights (left and right glass sheen)
     final leftHighlight = RRect.fromRectAndRadius(
-      Rect.fromLTWH(3, 8, 6, h - 30),
+      Rect.fromLTWH(3, 14, 6, h - 35),
       const Radius.circular(4),
     );
     canvas.drawRRect(
       leftHighlight,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.35)
+        ..color = Colors.white.withValues(alpha: 0.32)
         ..style = PaintingStyle.fill,
     );
 
     final rightHighlight = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w - 9, 8, 6, h - 30),
+      Rect.fromLTWH(w - 9, 14, 6, h - 35),
       const Radius.circular(4),
     );
     canvas.drawRRect(
       rightHighlight,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.18)
+        ..color = Colors.white.withValues(alpha: 0.16)
         ..style = PaintingStyle.fill,
     );
 
-    // Top cap / rim of chamber
-    final topCapRect = Rect.fromLTWH(-6, -5, w + 12, 26);
-    final topCap = RRect.fromRectAndRadius(topCapRect, const Radius.circular(14));
-    canvas.drawRRect(
-      topCap,
-      Paint()
-        ..shader = const LinearGradient(
-          colors: [Color(0xFFB0B8C8), Color(0xFF8A9BB0)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ).createShader(topCapRect)
-        ..style = PaintingStyle.fill,
-    );
-
-    // Top rim border
-    canvas.drawRRect(
-      topCap,
-      Paint()
-        ..color = const Color(0xFFD0D8E8).withValues(alpha: 0.7)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
-    );
-
-    // Glow light cone from top center downward
-    const glowColor = Color(0xFFFFF8E1);
-    final lightRect = Rect.fromLTWH(w * 0.15, 18, w * 0.70, h * 0.55);
+    // ── 2. Light Cone Projection from Top Cap ────────────────────────────────
+    const glowColor = Color(0xFFFFECB3); // Warm golden-amber light
+    final lightRect = Rect.fromLTWH(w * 0.10, 20, w * 0.80, h * 0.50);
     canvas.drawOval(
       lightRect,
       Paint()
         ..shader = RadialGradient(
-          colors: [
-            glowColor.withValues(alpha: 0.28),
-            glowColor.withValues(alpha: 0.0),
-          ],
-          center: const Alignment(0, -0.6),
+          colors: [glowColor.withValues(alpha: 0.30), glowColor.withValues(alpha: 0.0)],
+          center: const Alignment(0, -0.7),
         ).createShader(lightRect),
+    );
+
+    // ── 3. Sleek Streamlined Gold/Brass Top Cap Assembly ─────────────────────
+
+    // A. Soft Drop Shadow under top cap onto glass
+    final shadowRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(-2, 12, w + 4, 6),
+      const Radius.circular(6),
+    );
+    canvas.drawRRect(
+      shadowRect,
+      Paint()
+        ..color = const Color(0xFF3B1E08).withValues(alpha: 0.35)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+    );
+
+    // B. Slim Base Flange (Lower rim of cap)
+    final baseFlangeRect = Rect.fromLTWH(-3, 6, w + 6, 8);
+    final baseFlangeRRect = RRect.fromRectAndRadius(baseFlangeRect, const Radius.circular(6));
+    canvas.drawRRect(
+      baseFlangeRRect,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFFE8C898), Color(0xFFD4A055), Color(0xFF8D6228), Color(0xFF5D4037)],
+          stops: [0.0, 0.35, 0.75, 1.0],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(baseFlangeRect)
+        ..style = PaintingStyle.fill,
+    );
+
+    // C. Main Upper Crown Cap (Sleek low-profile top rim)
+    final mainCapRect = Rect.fromLTWH(-6, -4, w + 12, 13);
+    final mainCapRRect = RRect.fromRectAndRadius(mainCapRect, const Radius.circular(8));
+
+    canvas.drawRRect(
+      mainCapRRect,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [
+            Color(0xFFFFF5DF), // Top champagne sheen
+            Color(0xFFF5DEB3), // Cream gold
+            Color(0xFFD4A055), // Warm polished brass
+            Color(0xFFB87333), // Metallic copper transition
+            Color(0xFF6D4C2A), // Dark wood/brass shadow
+          ],
+          stops: [0.0, 0.2, 0.5, 0.8, 1.0],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(mainCapRect)
+        ..style = PaintingStyle.fill,
+    );
+
+    // D. Outer Gold Border for Main Cap
+    canvas.drawRRect(
+      mainCapRRect,
+      Paint()
+        ..color = const Color(0xFFFFE082).withValues(alpha: 0.85)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4,
+    );
+
+    // E. Inner Specular Highlight Line (Glossy reflection on main cap)
+    final highlightPath = Path()
+      ..moveTo(-2, -2)
+      ..quadraticBezierTo(w / 2, -4, w + 2, -2);
+    canvas.drawPath(
+      highlightPath,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.75)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // F. Inset Metallic Groove Line (Decorative band across cap)
+    canvas.drawLine(
+      Offset(-3, 3),
+      Offset(w + 3, 3),
+      Paint()
+        ..color = const Color(0xFF5D4037).withValues(alpha: 0.45)
+        ..strokeWidth = 0.9,
+    );
+    canvas.drawLine(
+      Offset(-3, 4),
+      Offset(w + 3, 4),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.35)
+        ..strokeWidth = 0.7,
     );
   }
 
@@ -276,11 +317,7 @@ class BeakerPainter extends CustomPainter {
   final double wavePhase;
   final bool isWhite;
 
-  BeakerPainter({
-    required this.liquidColor,
-    required this.wavePhase,
-    required this.isWhite,
-  });
+  BeakerPainter({required this.liquidColor, required this.wavePhase, required this.isWhite});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -305,7 +342,11 @@ class BeakerPainter extends CustomPainter {
       // Right side slanting inward
       ..lineTo(bottomX + bottomWidth, beakerBottom - cornerR)
       ..quadraticBezierTo(
-          bottomX + bottomWidth, beakerBottom, bottomX + bottomWidth - cornerR, beakerBottom)
+        bottomX + bottomWidth,
+        beakerBottom,
+        bottomX + bottomWidth - cornerR,
+        beakerBottom,
+      )
       // Bottom
       ..lineTo(bottomX + cornerR, beakerBottom)
       ..quadraticBezierTo(bottomX, beakerBottom, bottomX, beakerBottom - cornerR)
@@ -319,10 +360,7 @@ class BeakerPainter extends CustomPainter {
     canvas.clipPath(beakerPath);
 
     // Glass background fill
-    canvas.drawPath(
-      beakerPath,
-      Paint()..color = const Color(0xFFE8F4F8).withValues(alpha: 0.55),
-    );
+    canvas.drawPath(beakerPath, Paint()..color = const Color(0xFFE8F4F8).withValues(alpha: 0.55));
 
     // ── Liquid fill with wave ─────────────────────────────────────────────────
     final double liquidLevel = 0.42; // liquid fills ~42% from bottom
@@ -333,7 +371,8 @@ class BeakerPainter extends CustomPainter {
 
     // Wave on liquid surface
     for (double x = 0; x <= w; x += 3) {
-      final y = liquidTopY +
+      final y =
+          liquidTopY +
           sin((x / w) * 2.5 * pi + wavePhase) * 5 +
           cos((x / w) * 1.8 * pi + wavePhase * 0.7) * 3;
       liquidPath.lineTo(x, y);
@@ -346,8 +385,9 @@ class BeakerPainter extends CustomPainter {
     canvas.drawPath(
       liquidPath,
       Paint()
-        ..color =
-            isWhite ? const Color(0xFFF0F0F0).withValues(alpha: 0.9) : liquidColor.withValues(alpha: 0.88)
+        ..color = isWhite
+            ? const Color(0xFFF0F0F0).withValues(alpha: 0.9)
+            : liquidColor.withValues(alpha: 0.88)
         ..style = PaintingStyle.fill,
     );
 
@@ -355,7 +395,8 @@ class BeakerPainter extends CustomPainter {
     final waveSurfacePath = Path();
     waveSurfacePath.moveTo(0, liquidTopY);
     for (double x = 0; x <= w; x += 3) {
-      final y = liquidTopY +
+      final y =
+          liquidTopY +
           sin((x / w) * 2.5 * pi + wavePhase) * 5 +
           cos((x / w) * 1.8 * pi + wavePhase * 0.7) * 3;
       waveSurfacePath.lineTo(x, y);
@@ -419,11 +460,7 @@ class BeakerPainter extends CustomPainter {
       final markY = beakerTop + (beakerBottom - beakerTop) * i / 5;
       final markLeft = bottomX + (i % 2 == 0 ? 6 : 4);
       final markLen = i % 2 == 0 ? 16.0 : 10.0;
-      canvas.drawLine(
-        Offset(markLeft, markY),
-        Offset(markLeft + markLen, markY),
-        markPaint,
-      );
+      canvas.drawLine(Offset(markLeft, markY), Offset(markLeft + markLen, markY), markPaint);
     }
   }
 
