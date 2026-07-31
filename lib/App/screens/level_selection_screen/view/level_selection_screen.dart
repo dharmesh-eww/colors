@@ -75,8 +75,8 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
     super.initState();
     _bgGame = PaintBackgroundGame();
 
-    // Pulse animation for current playing level highlight
-    _glowController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
+    // Pulse animation for current playing level highlight & floating hero bottle
+    _glowController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))
       ..repeat(reverse: true);
 
     _glowAnimation = Tween<double>(
@@ -93,8 +93,7 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
     if (mounted) {
       setState(() {
         _unlockedLevel = unlocked;
-        final targetPage =
-            ((_unlockedLevel - 1) / _itemsPerPage).floor().clamp(0, _totalPages - 1);
+        final targetPage = ((_unlockedLevel - 1) / _itemsPerPage).floor().clamp(0, _totalPages - 1);
         _currentPage = targetPage;
         if (_pageController.hasClients) {
           _pageController.jumpToPage(_currentPage);
@@ -171,17 +170,7 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
                 // ── Header Panel ──────────────────────────────────────────
                 _Header(completedCount: _completedCount, totalCount: _totalLevelsCount),
 
-                const SizedBox(height: 6),
-
-                // ── Total Progress Bar ────────────────────────────────────
-                _ProgressBar(completed: _completedCount, total: _totalLevelsCount),
-
-                const SizedBox(height: 8),
-
-                // ── Legend Row (Completed, Playing, Locked) ───────────────
-                const _LegendRow(),
-
-                const SizedBox(height: 8),
+                const SizedBox(height: 24),
 
                 // ── Page View Grid with Silky Smooth Carousel Physics ──────
                 Expanded(
@@ -264,7 +253,7 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
               final level = _getLevelData(itemIndex);
               return Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(3.5),
+                  padding: const EdgeInsets.all(3.0),
                   child: _LevelCard(
                     level: level,
                     glowValue: _glowAnimation.value,
@@ -417,110 +406,6 @@ class _Header extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Total Progress Bar
-// ─────────────────────────────────────────────────────────────────────────────
-class _ProgressBar extends StatelessWidget {
-  final int completed;
-  final int total;
-  const _ProgressBar({required this.completed, required this.total});
-
-  @override
-  Widget build(BuildContext context) {
-    final double ratio = completed / total;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: Stack(
-              children: [
-                Container(
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-                FractionallySizedBox(
-                  widthFactor: ratio.clamp(0.01, 1.0),
-                  child: Container(
-                    height: 7,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFD700), Color(0xFF4CAF50)],
-                      ),
-                      borderRadius: BorderRadius.circular(6),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFFD700).withValues(alpha: 0.5),
-                          blurRadius: 6,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            'Overall Progress: ${(ratio * 100).toStringAsFixed(1)}% ($completed / $total)',
-            style: TextStyle(
-              color: const Color(0xFFF5DEB3).withValues(alpha: 0.8),
-              fontSize: 9.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.3,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Legend Row
-// ─────────────────────────────────────────────────────────────────────────────
-class _LegendRow extends StatelessWidget {
-  const _LegendRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _legendItem(const Color(0xFF4CAF50), Icons.star_rounded, 'Completed'),
-        const SizedBox(width: 16),
-        _legendItem(const Color(0xFFFFD700), Icons.play_circle_fill_rounded, 'Playing'),
-        const SizedBox(width: 16),
-        _legendItem(const Color(0xFF8D6228), Icons.lock_rounded, 'Locked'),
-      ],
-    );
-  }
-
-  Widget _legendItem(Color color, IconData icon, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color, size: 12),
-        const SizedBox(width: 3),
-        Text(
-          label,
-          style: TextStyle(
-            color: const Color(0xFFF5DEB3).withValues(alpha: 0.85),
-            fontSize: 9.5,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.3,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Page Navigation Controls (< Page X / Y >)
 // ─────────────────────────────────────────────────────────────────────────────
 class _PageNavigationControls extends StatelessWidget {
@@ -628,18 +513,14 @@ class _PageNavigationControls extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Level Item Card Widget — Matches _Header Cream Tan Wood Theme
+// Level Card Widget
 // ─────────────────────────────────────────────────────────────────────────────
 class _LevelCard extends StatelessWidget {
   final _LevelData level;
   final double glowValue;
   final VoidCallback? onTap;
 
-  const _LevelCard({
-    required this.level,
-    required this.glowValue,
-    required this.onTap,
-  });
+  const _LevelCard({required this.level, required this.glowValue, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -647,91 +528,75 @@ class _LevelCard extends StatelessWidget {
     final bool isPlaying = level.state == _LevelState.playing;
     final bool isLocked = level.state == _LevelState.locked;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: _cardGradient(isCompleted, isPlaying, isLocked),
-          border: Border.all(
-            color: _borderColor(isCompleted, isPlaying, isLocked, glowValue),
-            width: isPlaying ? 2.5 : 1.6,
-          ),
-          boxShadow: _cardShadow(isCompleted, isPlaying, isLocked, glowValue),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // ── Top: Target Color Swatch Dot ────────────────────────────
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: isLocked
-                    ? const Color(0xFF5D4037).withValues(alpha: 0.25)
-                    : level.targetColor,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isLocked
-                      ? Colors.transparent
-                      : const Color(0xFFD4A055).withValues(alpha: 0.6),
-                  width: 1.0,
+    // Scale pulse for active playing level
+    final double cardScale = isPlaying ? 0.97 + (glowValue - 0.6) * 0.08 : 1.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double fontSize = level.number > 999 ? 11.0 : 14.0;
+        final double textSize = fontSize + 6.0;
+        final double totalHeight = constraints.hasBoundedHeight ? constraints.maxHeight : 78.0;
+        final double remainingHeight = (totalHeight - textSize).clamp(0.0, totalHeight);
+        final double bottleWidth = remainingHeight * (70.0 / 60.0);
+
+        return GestureDetector(
+          onTap: onTap,
+          child: Transform.scale(
+            scale: cardScale,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: bottleWidth,
+                  height: remainingHeight,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CustomPaint(
+                        painter: _HeroPotionBottlePainter(
+                          targetColor: level.targetColor,
+                          isCompleted: isCompleted,
+                          isPlaying: isPlaying,
+                          isLocked: isLocked,
+                          glowValue: glowValue,
+                        ),
+                      ),
+                      Align(
+                        alignment: const Alignment(0.0, 0.8),
+                        child: _buildStatusFooter(isCompleted, isPlaying, isLocked),
+                      ),
+                    ],
+                  ),
                 ),
-                boxShadow: isLocked
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: level.targetColor.withValues(alpha: 0.5),
-                          blurRadius: 4,
-                        ),
-                      ],
-              ),
-            ),
 
-            // ── Center: Level Number ───────────────────────────────────
-            Text(
-              '${level.number}',
-              style: TextStyle(
-                color: isLocked
-                    ? const Color(0xFFF5DEB3).withValues(alpha: 0.35)
-                    : isPlaying
-                        ? const Color(0xFF3B1E08)
-                        : const Color(0xFF5D4037),
-                fontWeight: FontWeight.w900,
-                fontSize: level.number > 999 ? 12 : 14,
-                letterSpacing: 0.5,
-                shadows: isPlaying
-                    ? [
-                        Shadow(
-                          color: const Color(0xFFFFD700).withValues(alpha: 0.8),
-                          blurRadius: 6,
-                        ),
-                      ]
-                    : (isCompleted
-                        ? const [
-                            Shadow(
-                              color: Color(0x22000000),
-                              offset: Offset(0, 1),
-                              blurRadius: 1,
-                            ),
-                          ]
-                        : null),
-              ),
-            ),
+                // ── Level Number (White Text) ──────────────────────────
+                Text(
+                  '${level.number}',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: fontSize,
+                    height: 1.1,
+                    letterSpacing: 0.5,
+                    shadows: const [
+                      Shadow(color: Color(0xAA000000), offset: Offset(0, 1.5), blurRadius: 2),
+                    ],
+                  ),
+                ),
 
-            // ── Bottom: Status Element (Stars, Playing Badge, or Lock) ──
-            _buildStatusFooter(isCompleted, isPlaying, isLocked),
-          ],
-        ),
-      ),
+                // ── Status Footer (Stars for Completed, Lock Icon for Locked, None for Current) ──
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
+  /// Status footer: 1 to 3 stars for completed, Lock Icon for locked, empty for current level
   Widget _buildStatusFooter(bool isCompleted, bool isPlaying, bool isLocked) {
     if (isCompleted) {
-      // 1 to 3 Golden Stars matching _Header wood palette
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(3, (starIndex) {
@@ -740,123 +605,274 @@ class _LevelCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 0.5),
             child: Icon(
               Icons.star_rounded,
-              size: 12,
-              color: active ? const Color(0xFFE67E22) : const Color(0x335D4037),
+              size: 13,
+              color: active ? const Color(0xFFFFD700) : const Color(0x44FFFFFF),
             ),
           );
         }),
       );
-    } else if (isPlaying) {
-      // Active Playing Badge matching _Header theme
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              const Color(0xFFFFD700).withValues(alpha: glowValue),
-              const Color(0xFFFF8F00).withValues(alpha: glowValue * 0.85),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFFFD700).withValues(alpha: glowValue * 0.6),
-              blurRadius: 6,
-            ),
-          ],
-        ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.play_arrow_rounded,
-              size: 10,
-              color: Color(0xFF3B1E08),
-            ),
-            SizedBox(width: 1),
-            Text(
-              'PLAY',
-              style: TextStyle(
-                color: Color(0xFF3B1E08),
-                fontSize: 7.5,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      // Locked Status Icon
-      return Icon(
-        Icons.lock_rounded,
-        size: 11,
-        color: const Color(0xFFF5DEB3).withValues(alpha: 0.35),
-      );
     }
-  }
-
-  LinearGradient _cardGradient(
-      bool isCompleted, bool isPlaying, bool isLocked) {
-    if (isPlaying) {
-      // Bright active parchment gradient (matching _Header theme)
-      return const LinearGradient(
-        colors: [Color(0xFFFFF8E1), Color(0xFFFFE0B2)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      );
-    }
-    if (isCompleted) {
-      // Warm cream tan parchment gradient (EXACTLY matching _Header)
-      return const LinearGradient(
-        colors: [Color(0xFFF5DEB3), Color(0xFFE8C898)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      );
-    }
-    // Locked — semi-transparent dark wood tan tint
-    return LinearGradient(
-      colors: [
-        const Color(0xFF4A2F17).withValues(alpha: 0.55),
-        const Color(0xFF3B1E08).withValues(alpha: 0.55),
-      ],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-    );
-  }
-
-  Color _borderColor(
-      bool isCompleted, bool isPlaying, bool isLocked, double glow) {
-    if (isPlaying) {
-      return const Color(0xFFFFD700).withValues(alpha: glow);
-    }
-    if (isCompleted) {
-      return const Color(0xFFD4A055); // Matching _Header border color
-    }
-    return const Color(0xFFD4A055).withValues(alpha: 0.22);
-  }
-
-  List<BoxShadow> _cardShadow(
-      bool isCompleted, bool isPlaying, bool isLocked, double glow) {
-    if (isPlaying) {
-      return [
-        BoxShadow(
-          color: const Color(0xFFFFD700).withValues(alpha: glow * 0.5),
-          blurRadius: 12,
-          spreadRadius: 1,
-        ),
-      ];
-    }
-    if (isCompleted) {
-      return [
-        BoxShadow(
-          color: const Color(0xFF3B1E08).withValues(alpha: 0.25),
-          blurRadius: 6,
-          offset: const Offset(0, 3),
-        ),
-      ];
-    }
-    return [];
+    return SizedBox();
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CustomPainter: Bulbous Potion Flask + Sliced Wooden Log Pedestal
+// ─────────────────────────────────────────────────────────────────────────────
+class _HeroPotionBottlePainter extends CustomPainter {
+  final Color targetColor;
+  final bool isCompleted;
+  final bool isPlaying;
+  final bool isLocked;
+  final double glowValue;
+
+  _HeroPotionBottlePainter({
+    required this.targetColor,
+    required this.isCompleted,
+    required this.isPlaying,
+    required this.isLocked,
+    required this.glowValue,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+
+    // ── 1. Sliced Wooden Log Disk Pedestal (Underneath Bottle) ────────────
+    final pedestalY = h * 0.58;
+    final pedestalW = w * 0.86;
+    final pedestalH = h * 0.36;
+    final pedestalX = (w - pedestalW) / 2;
+
+    // Drop shadow under wooden pedestal
+    canvas.drawOval(
+      Rect.fromLTWH(pedestalX, pedestalY + pedestalH * 0.4, pedestalW, pedestalH * 0.6),
+      Paint()
+        ..color = Colors.black.withValues(alpha: isLocked ? 0.2 : 0.35)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+    );
+
+    // Pedestal bottom plank thickness edge
+    final woodRimColor = isLocked ? const Color(0xFF616161) : const Color(0xFF8D6228);
+    final woodTopColor = isLocked ? const Color(0xFF9E9E9E) : const Color(0xFFC68B59);
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(pedestalX, pedestalY + 3, pedestalW, pedestalH - 3),
+        Radius.circular(pedestalH * 0.5),
+      ),
+      Paint()..color = woodRimColor,
+    );
+
+    // Pedestal top log slice surface
+    canvas.drawOval(
+      Rect.fromLTWH(pedestalX, pedestalY, pedestalW, pedestalH * 0.75),
+      Paint()..color = woodTopColor,
+    );
+
+    // Pedestal surface wood ring highlights
+    canvas.drawOval(
+      Rect.fromLTWH(pedestalX + 3, pedestalY + 1.5, pedestalW - 6, (pedestalH * 0.75) - 3),
+      Paint()
+        ..color = isLocked
+            ? Colors.white.withValues(alpha: 0.15)
+            : const Color(0xFFE5AA70).withValues(alpha: 0.4)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
+
+    // ── 2. Bulbous Sphere Potion Bottle ──────────────────────────────────
+    final bottleRadius = w * 0.26;
+    final bottleCenter = Offset(w * 0.5, h * 0.40);
+
+    // Cork Stopper
+    final corkW = w * 0.24;
+    final corkH = h * 0.10;
+    final corkX = (w - corkW) / 2;
+    final corkY = h * 0.04;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(corkX, corkY, corkW, corkH),
+        const Radius.circular(2.0),
+      ),
+      Paint()..color = isLocked ? const Color(0xFF757575) : const Color(0xFFD4A055),
+    );
+
+    // Bottle Neck
+    final neckW = w * 0.20;
+    final neckH = h * 0.12;
+    final neckX = (w - neckW) / 2;
+    final neckY = corkY + corkH - 1;
+
+    canvas.drawRect(
+      Rect.fromLTWH(neckX, neckY, neckW, neckH),
+      Paint()
+        ..color = isLocked
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.white.withValues(alpha: 0.25),
+    );
+
+    // Bulbous Sphere Body Clip
+    canvas.save();
+    final bottlePath = Path()..addOval(Rect.fromCircle(center: bottleCenter, radius: bottleRadius));
+
+    canvas.clipPath(bottlePath);
+
+    // Glass Background Fill
+    canvas.drawCircle(
+      bottleCenter,
+      bottleRadius,
+      Paint()
+        ..color = isLocked
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.white.withValues(alpha: 0.22),
+    );
+
+    // Liquid Fill inside bulbous body (60% filled)
+    if (!isLocked) {
+      final liquidY = bottleCenter.dy - bottleRadius * 0.2;
+      final liquidHeight = bottleRadius * 1.5;
+
+      final liquidPaint = Paint()
+        ..shader =
+            LinearGradient(
+              colors: [targetColor, targetColor.withValues(alpha: 0.85)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ).createShader(
+              Rect.fromLTWH(
+                bottleCenter.dx - bottleRadius,
+                liquidY,
+                bottleRadius * 2,
+                liquidHeight,
+              ),
+            );
+
+      canvas.drawRect(
+        Rect.fromLTWH(bottleCenter.dx - bottleRadius, liquidY, bottleRadius * 2, liquidHeight),
+        liquidPaint,
+      );
+
+      // Liquid Surface Gloss Sheen
+      canvas.drawOval(
+        Rect.fromLTWH(bottleCenter.dx - bottleRadius * 0.85, liquidY - 2, bottleRadius * 1.7, 4),
+        Paint()..color = Colors.white.withValues(alpha: 0.55),
+      );
+
+      // Bubbles / Sparkles inside Liquid
+      final bubblePaint = Paint()..color = Colors.white.withValues(alpha: 0.7);
+      canvas.drawCircle(Offset(bottleCenter.dx - 4, liquidY + 6), 1.2, bubblePaint);
+      canvas.drawCircle(Offset(bottleCenter.dx + 5, liquidY + 10), 1.0, bubblePaint);
+      canvas.drawCircle(Offset(bottleCenter.dx + 1, liquidY + 14), 0.8, bubblePaint);
+    } else {
+      // Grayscale liquid for locked state
+      final liquidY = bottleCenter.dy - bottleRadius * 0.1;
+      canvas.drawRect(
+        Rect.fromLTWH(
+          bottleCenter.dx - bottleRadius,
+          liquidY,
+          bottleRadius * 2,
+          bottleRadius * 1.5,
+        ),
+        Paint()..color = Colors.white.withValues(alpha: 0.1),
+      );
+    }
+
+    canvas.restore();
+
+    // Specular Glass Specular Highlights (Left Rim Curve)
+    final glassHighlightPath = Path()
+      ..addArc(
+        Rect.fromCircle(center: bottleCenter, radius: bottleRadius - 1.5),
+        2.2, // radians angle
+        1.2, // sweep arc length
+      );
+
+    canvas.drawPath(
+      glassHighlightPath,
+      Paint()
+        ..color = Colors.white.withValues(alpha: isLocked ? 0.3 : 0.75)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.8
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Glass Bottle Outline Rim
+    canvas.drawCircle(
+      bottleCenter,
+      bottleRadius,
+      Paint()
+        ..color = isLocked
+            ? Colors.white.withValues(alpha: 0.25)
+            : Colors.white.withValues(alpha: 0.7)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
+
+    // ── 3. Metallic Keyhole Padlock Icon for Locked State ─────────────────
+    if (isLocked) {
+      final lockW = w * 0.18;
+      final lockH = h * 0.20;
+      final lockX = (w - lockW) / 2;
+      final lockY = bottleCenter.dy - lockH * 0.25;
+
+      // Shackle
+      final shackleRect = Rect.fromLTWH(
+        lockX + lockW * 0.2,
+        lockY - lockH * 0.25,
+        lockW * 0.6,
+        lockH * 0.5,
+      );
+      canvas.drawArc(
+        shackleRect,
+        3.14,
+        3.14,
+        false,
+        Paint()
+          ..color = const Color(0xFFE0E0E0)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.8,
+      );
+
+      // Lock Body
+      final lockBodyRect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(lockX, lockY, lockW, lockH * 0.75),
+        const Radius.circular(2.5),
+      );
+
+      canvas.drawRRect(
+        lockBodyRect,
+        Paint()
+          ..shader = const LinearGradient(
+            colors: [Color(0xFFE0E0E0), Color(0xFF9E9E9E)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ).createShader(lockBodyRect.outerRect),
+      );
+
+      // Keyhole
+      canvas.drawCircle(
+        Offset(w * 0.5, lockY + lockH * 0.3),
+        1.5,
+        Paint()..color = const Color(0xFF333333),
+      );
+      final keyholePath = Path()
+        ..moveTo(w * 0.5 - 1.0, lockY + lockH * 0.3)
+        ..lineTo(w * 0.5 + 1.0, lockY + lockH * 0.3)
+        ..lineTo(w * 0.5 + 1.4, lockY + lockH * 0.48)
+        ..lineTo(w * 0.5 - 1.4, lockY + lockH * 0.48)
+        ..close();
+      canvas.drawPath(keyholePath, Paint()..color = const Color(0xFF333333));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _HeroPotionBottlePainter oldDelegate) =>
+      oldDelegate.targetColor != targetColor ||
+      oldDelegate.isCompleted != isCompleted ||
+      oldDelegate.isPlaying != isPlaying ||
+      oldDelegate.isLocked != isLocked ||
+      oldDelegate.glowValue != glowValue;
+}
