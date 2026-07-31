@@ -683,13 +683,27 @@ class _HeroPotionBottlePainter extends CustomPainter {
     // ── 2. Bulbous Sphere Potion Bottle ──────────────────────────────────
     final bottleRadius = w * 0.24;
     final bottleCenter = Offset(w * 0.5, h * 0.5);
+    final sphereTopY = bottleCenter.dy - bottleRadius;
+
+    // Bottle Neck Part 2: Lower Main Neck Tube (Decreased height)
+    final neckW = w * 0.15;
+    final neckH = h * 0.05;
+    final neckX = (w - neckW) / 2;
+    final neckY = sphereTopY - neckH + 3.0;
+
+    // Bottle Neck Part 1: Upper Glass Lip Collar
+    final lipW = w * 0.20;
+    final lipH = h * 0.03;
+    final lipX = (w - lipW) / 2;
+    final lipY = neckY - lipH + 1.0;
 
     // Cork Stopper
     final corkW = w * 0.22;
-    final corkH = h * 0.08;
+    final corkH = h * 0.07;
     final corkX = (w - corkW) / 2;
-    final corkY = h * 0.05;
+    final corkY = lipY - corkH + 1.0;
 
+    // Draw Cork Stopper
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(corkX, corkY, corkW, corkH),
@@ -698,19 +712,31 @@ class _HeroPotionBottlePainter extends CustomPainter {
       Paint()..color = isLocked ? const Color(0xFF757575) : const Color(0xFFD4A055),
     );
 
-    // Bottle Neck
-    final neckW = w * 0.18;
-    final neckH = h * 0.10;
-    final neckX = (w - neckW) / 2;
-    final neckY = corkY + corkH - 1;
+    final glassFillPaint = Paint()
+      ..color = isLocked
+          ? Colors.white.withValues(alpha: 0.1)
+          : Colors.white.withValues(alpha: 0.25);
 
-    canvas.drawRect(
-      Rect.fromLTWH(neckX, neckY, neckW, neckH),
-      Paint()
-        ..color = isLocked
-            ? Colors.white.withValues(alpha: 0.1)
-            : Colors.white.withValues(alpha: 0.25),
+    final glassStrokePaint = Paint()
+      ..color = isLocked
+          ? Colors.white.withValues(alpha: 0.25)
+          : Colors.white.withValues(alpha: 0.7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+
+    // Draw Neck Part 1: Upper Glass Lip Collar
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(lipX, lipY, lipW, lipH), const Radius.circular(1.5)),
+      glassFillPaint,
     );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(lipX, lipY, lipW, lipH), const Radius.circular(1.5)),
+      glassStrokePaint,
+    );
+
+    // Draw Neck Part 2: Lower Main Neck Tube
+    canvas.drawRect(Rect.fromLTWH(neckX, neckY, neckW, neckH), glassFillPaint);
+    canvas.drawRect(Rect.fromLTWH(neckX, neckY, neckW, neckH), glassStrokePaint);
 
     // Bulbous Sphere Body Clip
     canvas.save();
