@@ -9,6 +9,8 @@ import '../screens/play_screen/view/play_screen.dart';
 import '../screens/play_screen/controller/play_screen_controller.dart';
 import '../screens/level_selection_screen/view/level_selection_screen.dart';
 import '../screens/level_selection_screen/controller/level_selection_controller.dart';
+import '../screens/settings_screen/view/settings_screen.dart';
+import '../screens/settings_screen/controller/settings_screen_controller.dart';
 
 abstract class RouteNavigator {
   static final Map<String, Widget Function(BuildContext)> routes = {
@@ -22,10 +24,12 @@ abstract class RouteNavigator {
       child: PlayScreen(),
     ),
     Routes.levelSelectionScreen: (BuildContext context) => StateProvider(
-      stateProvider: StatekitProvider(
-        create: () => LevelSelectionController(),
-      ),
+      stateProvider: StatekitProvider(create: () => LevelSelectionController()),
       child: LevelSelectionScreen(),
+    ),
+    Routes.settingsScreen: (BuildContext context) => StateProvider(
+      stateProvider: StatekitProvider(create: () => SettingsScreenController()),
+      child: SettingsScreen(),
     ),
   };
 }

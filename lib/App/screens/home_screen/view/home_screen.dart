@@ -172,6 +172,36 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
               ),
             ),
           ),
+          Positioned(
+            top: 14,
+            right: 16,
+            child: SafeArea(
+              child: GestureDetector(
+                onTap: () => widget.controller.settingsButtonClicked(context),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFF5DEB3), Color(0xFFE8C898)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.settings_rounded, color: Color(0xFF5D4037), size: 24),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

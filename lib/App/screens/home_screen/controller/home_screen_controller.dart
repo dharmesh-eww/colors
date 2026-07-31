@@ -7,4 +7,8 @@ class HomeScreenController extends StateController<HomeScreenBinding> {
   void playButtonClicked(BuildContext context) {
     Navigator.pushNamed(context, Routes.levelSelectionScreen);
   }
+
+  void settingsButtonClicked(BuildContext context) {
+    Navigator.pushNamed(context, Routes.settingsScreen);
+  }
 }
