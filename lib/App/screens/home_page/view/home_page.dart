@@ -33,31 +33,12 @@ class _HomeScreenBody extends StatefulWidget {
 }
 
 class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _scaleAnimation;
   late PaintBackgroundGame _bgGame;
 
   @override
   void initState() {
     super.initState();
     _bgGame = PaintBackgroundGame();
-
-    // Play button pulse
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.05,
-    ).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
   }
 
   @override
@@ -177,134 +158,6 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
           ),
         ),
       ],
-    );
-  }
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Theme-Matched 3D Gold & Wood PLAY Button
-// ──────────────────────────────────────────────────────────────────────────────
-class _PlayButtonWidget extends StatefulWidget {
-  final VoidCallback onTap;
-  final Animation<double> pulseAnimation;
-
-  const _PlayButtonWidget({required this.onTap, required this.pulseAnimation});
-
-  @override
-  State<_PlayButtonWidget> createState() => _PlayButtonWidgetState();
-}
-
-class _PlayButtonWidgetState extends State<_PlayButtonWidget> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: widget.pulseAnimation,
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _isPressed = true),
-        onTapUp: (_) => setState(() => _isPressed = false),
-        onTapCancel: () => setState(() => _isPressed = false),
-        onTap: widget.onTap,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedScale(
-          scale: _isPressed ? 0.92 : 1.0,
-          duration: const Duration(milliseconds: 120),
-          child: Container(
-            width: 215,
-            height: 68,
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xFFFFF5DF), // Champagne top highlight
-                  Color(0xFFF5DEB3), // Cream gold
-                  Color(0xFFD4A055), // Polished brass
-                  Color(0xFFB87333), // Copper edge
-                  Color(0xFF6D4C2A), // Warm wood base
-                ],
-                stops: [0.0, 0.25, 0.55, 0.82, 1.0],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              borderRadius: BorderRadius.circular(34),
-              border: Border.all(color: const Color(0xFFFFE082).withValues(alpha: 0.9), width: 2.5),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.5),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: const Color(0xFF3B1E08).withValues(alpha: 0.55),
-                  blurRadius: 10,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFF5DEB3), Color(0xFFE8C898), Color(0xFFD4A055)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: const Color(0xFF8D6228).withValues(alpha: 0.4),
-                  width: 1.2,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Play Icon Circle Badge
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFFFFD700).withValues(alpha: 0.8),
-                        width: 1.8,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(Icons.play_arrow_rounded, size: 28, color: Color(0xFFFFD700)),
-                  ),
-                  const SizedBox(width: 12),
-                  // PLAY Text
-                  const Text(
-                    'PLAY',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF3B1E08),
-                      letterSpacing: 3.5,
-                      shadows: [
-                        Shadow(color: Color(0x77FFFFFF), offset: Offset(0, 1), blurRadius: 2),
-                        Shadow(color: Color(0x33000000), offset: Offset(0, 2), blurRadius: 4),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
