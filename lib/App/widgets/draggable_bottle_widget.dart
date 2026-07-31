@@ -34,12 +34,38 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
   Timer? _pourTimer;
   Timer? _rotationDelayTimer;
   Offset _currentDragGlobalPos = Offset.zero;
+  late final ValueNotifier<double> _availableMlNotifier;
+
+  @override
+  void initState() {
+    super.initState();
+    _availableMlNotifier = ValueNotifier<double>(widget.bottle.availableMl);
+  }
+
+  @override
+  void didUpdateWidget(covariant DraggableBottleWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.bottle.availableMl != widget.bottle.availableMl) {
+      _availableMlNotifier.value = widget.bottle.availableMl;
+    }
+  }
 
   void _startPouring() {
     _pourTimer?.cancel();
     _rotationDelayTimer?.cancel();
 
-    _rotationDelayTimer = Timer(const Duration(milliseconds: 150), () {
+    _rotationDelayTimer = Timer(const Duration(milliseconds: 80), () {
+      if (widget.flameGame != null && _currentDragGlobalPos != Offset.zero) {
+        widget.flameGame!.startLiquidPour(
+          bottleNozzlePos: Vector2(_currentDragGlobalPos.dx, _currentDragGlobalPos.dy),
+          color: widget.bottle.color,
+          targetTilePos: Vector2(
+            widget.mixingTileArea.center.dx,
+            widget.mixingTileArea.center.dy,
+          ),
+        );
+      }
+
       _pourTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
         if (widget.bottle.availableMl <= 0) {
           _stopPouring();
@@ -47,11 +73,11 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
         }
 
         widget.onPourContinuous(widget.bottle.type, 2.5, _currentDragGlobalPos);
+        _availableMlNotifier.value = widget.bottle.availableMl;
 
         if (widget.flameGame != null && _currentDragGlobalPos != Offset.zero) {
-          widget.flameGame!.spawnDropletStream(
+          widget.flameGame!.updateLiquidPour(
             bottleNozzlePos: Vector2(_currentDragGlobalPos.dx, _currentDragGlobalPos.dy),
-            color: widget.bottle.color,
             targetTilePos: Vector2(
               widget.mixingTileArea.center.dx,
               widget.mixingTileArea.center.dy,
@@ -67,6 +93,7 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
     _rotationDelayTimer = null;
     _pourTimer?.cancel();
     _pourTimer = null;
+    widget.flameGame?.stopLiquidPour();
   }
 
   void _resetDrag() {
@@ -84,36 +111,44 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
   void dispose() {
     _rotationDelayTimer?.cancel();
     _pourTimer?.cancel();
+    widget.flameGame?.stopLiquidPour();
+    _availableMlNotifier.dispose();
     super.dispose();
   }
 
   /// Build the corked ink bottle graphic using CustomPaint
   Widget _buildInkBottle({required bool isDragging, required bool isTilted}) {
-    final bottle = widget.bottle;
-    final double fillRatio = (bottle.availableMl / 100.0).clamp(0.0, 1.0);
+    return ValueListenableBuilder<double>(
+      valueListenable: _availableMlNotifier,
+      builder: (context, availableMl, child) {
+        final bottle = widget.bottle;
+        final double fillRatio = (availableMl / 100.0).clamp(0.0, 1.0);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      transform: isTilted
-          ? (Matrix4.identity()
-            ..rotateZ(-pi * 0.52)
-            ..multiply(Matrix4.diagonal3Values(1.15, 1.15, 1.0)))
-          : (isDragging
-              ? (Matrix4.identity()..multiply(Matrix4.diagonal3Values(1.1, 1.1, 1.0)))
-              : Matrix4.identity()),
-      transformAlignment: Alignment.topCenter,
-      child: SizedBox(
-        width: 50,
-        height: 72,
-        child: CustomPaint(
-          painter: _InkBottlePainter(
-            color: bottle.color,
-            fillRatio: fillRatio,
-            isWhite: bottle.type == PaintType.white,
-            isBlack: bottle.type == PaintType.black,
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          transform: isTilted
+              ? (Matrix4.identity()
+                ..rotateZ(-pi * 0.52)
+                ..multiply(Matrix4.diagonal3Values(1.15, 1.15, 1.0)))
+              : (isDragging
+                  ? (Matrix4.identity()..multiply(Matrix4.diagonal3Values(1.1, 1.1, 1.0)))
+                  : Matrix4.identity()),
+          transformAlignment: Alignment.topCenter,
+          child: SizedBox(
+            width: 50,
+            height: 72,
+            child: CustomPaint(
+              painter: _InkBottlePainter(
+                color: bottle.color,
+                fillRatio: fillRatio,
+                isWhite: bottle.type == PaintType.white,
+                isBlack: bottle.type == PaintType.black,
+                isUncorked: isTilted,
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -161,6 +196,14 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
                   } else {
                     _stopPouring();
                   }
+                } else if (isCurrentlyOverTile && widget.flameGame != null) {
+                  widget.flameGame!.updateLiquidPour(
+                    bottleNozzlePos: Vector2(_currentDragGlobalPos.dx, _currentDragGlobalPos.dy),
+                    targetTilePos: Vector2(
+                      widget.mixingTileArea.center.dx,
+                      widget.mixingTileArea.center.dy,
+                    ),
+                  );
                 }
               },
               onDragEnd: (details) => _resetDrag(),
@@ -249,12 +292,14 @@ class _InkBottlePainter extends CustomPainter {
   final double fillRatio;
   final bool isWhite;
   final bool isBlack;
+  final bool isUncorked;
 
   _InkBottlePainter({
     required this.color,
     required this.fillRatio,
     required this.isWhite,
     required this.isBlack,
+    this.isUncorked = false,
   });
 
   @override
@@ -262,44 +307,55 @@ class _InkBottlePainter extends CustomPainter {
     final double w = size.width;
     final double h = size.height;
 
-    // ── Cork stopper ────────────────────────────────────────────────────────
+    // ── Cork stopper / Open spout ───────────────────────────────────────────
     final double corkH = h * 0.12;
     final double corkW = w * 0.36;
     final double corkX = (w - corkW) / 2;
     final double corkY = 0;
 
-    final corkRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(corkX, corkY, corkW, corkH),
-      const Radius.circular(3),
-    );
-    canvas.drawRRect(
-      corkRect,
-      Paint()
-        ..color = const Color(0xFFD4A055)
-        ..style = PaintingStyle.fill,
-    );
-    canvas.drawRRect(
-      corkRect,
-      Paint()
-        ..color = const Color(0xFF8D6228).withValues(alpha: 0.6)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
+    if (!isUncorked) {
+      final corkRect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(corkX, corkY, corkW, corkH),
+        const Radius.circular(3),
+      );
+      canvas.drawRRect(
+        corkRect,
+        Paint()
+          ..color = const Color(0xFFD4A055)
+          ..style = PaintingStyle.fill,
+      );
+      canvas.drawRRect(
+        corkRect,
+        Paint()
+          ..color = const Color(0xFF8D6228).withValues(alpha: 0.6)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0,
+      );
 
-    // Cork grain lines
-    final grainPaint = Paint()
-      ..color = const Color(0xFF8D6228).withValues(alpha: 0.35)
-      ..strokeWidth = 0.8;
-    canvas.drawLine(
-      Offset(corkX + corkW * 0.3, corkY + 2),
-      Offset(corkX + corkW * 0.3, corkY + corkH - 2),
-      grainPaint,
-    );
-    canvas.drawLine(
-      Offset(corkX + corkW * 0.65, corkY + 2),
-      Offset(corkX + corkW * 0.65, corkY + corkH - 2),
-      grainPaint,
-    );
+      // Cork grain lines
+      final grainPaint = Paint()
+        ..color = const Color(0xFF8D6228).withValues(alpha: 0.35)
+        ..strokeWidth = 0.8;
+      canvas.drawLine(
+        Offset(corkX + corkW * 0.3, corkY + 2),
+        Offset(corkX + corkW * 0.3, corkY + corkH - 2),
+        grainPaint,
+      );
+      canvas.drawLine(
+        Offset(corkX + corkW * 0.65, corkY + 2),
+        Offset(corkX + corkW * 0.65, corkY + corkH - 2),
+        grainPaint,
+      );
+    } else {
+      // Draw liquid glow at open spout nozzle
+      canvas.drawCircle(
+        Offset(w / 2, corkY + corkH / 2),
+        4.5,
+        Paint()
+          ..color = color.withValues(alpha: 0.9)
+          ..style = PaintingStyle.fill,
+      );
+    }
 
     // ── Bottle neck ──────────────────────────────────────────────────────────
     final double neckH = h * 0.16;
@@ -445,6 +501,8 @@ class _InkBottlePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _InkBottlePainter oldDelegate) {
-    return oldDelegate.fillRatio != fillRatio || oldDelegate.color != color;
+    return oldDelegate.fillRatio != fillRatio ||
+        oldDelegate.color != color ||
+        oldDelegate.isUncorked != isUncorked;
   }
 }

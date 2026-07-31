@@ -3,64 +3,129 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
-class DropletParticle extends PositionComponent {
-  final Vector2 targetPosition;
-  final Color color;
-  final double radius;
-  final VoidCallback onImpact;
+class LiquidStreamComponent extends Component {
+  Vector2 startPos = Vector2.zero();
+  Vector2 targetPos = Vector2.zero();
+  Color color = Colors.transparent;
+  bool active = false;
+  double animationTime = 0.0;
+  double _rippleTimer = 0.0;
 
-  double age = 0;
-  final double duration = 0.35;
-  final Vector2 startPosition;
+  void start({
+    required Vector2 startPos,
+    required Vector2 targetPos,
+    required Color color,
+  }) {
+    this.startPos = startPos;
+    this.targetPos = targetPos;
+    this.color = color;
+    active = true;
+  }
 
-  DropletParticle({
-    required Vector2 position,
-    required this.targetPosition,
-    required this.color,
-    this.radius = 6.0,
-    required this.onImpact,
-  })  : startPosition = position.clone(),
-        super(position: position, size: Vector2.all(radius * 2));
+  void updatePosition({
+    required Vector2 startPos,
+    required Vector2 targetPos,
+  }) {
+    this.startPos = startPos;
+    this.targetPos = targetPos;
+  }
+
+  void stop() {
+    active = false;
+  }
 
   @override
   void update(double dt) {
     super.update(dt);
-    age += dt;
-    final progress = (age / duration).clamp(0.0, 1.0);
+    if (!active) return;
 
-    // Quadratic bezier path for arc drop
-    final currentX = startPosition.x + (targetPosition.x - startPosition.x) * progress;
-    final currentY = startPosition.y + (targetPosition.y - startPosition.y) * progress + sin(progress * pi) * -20;
+    animationTime += dt;
+    _rippleTimer += dt;
 
-    position = Vector2(currentX, currentY);
-
-    if (progress >= 1.0) {
-      onImpact();
-      removeFromParent();
+    // Spawn splash ripples at target position every 0.08s
+    if (_rippleTimer >= 0.08) {
+      _rippleTimer = 0;
+      final random = Random();
+      final offsetPos = Vector2(
+        targetPos.x + (random.nextDouble() - 0.5) * 16,
+        targetPos.y + (random.nextDouble() - 0.5) * 10,
+      );
+      parent?.add(SplashRippleParticle(
+        position: offsetPos,
+        color: color,
+      ));
     }
   }
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
+    if (!active || (startPos.x == 0 && startPos.y == 0)) return;
 
-    // Teardrop shape
-    final path = Path()
-      ..moveTo(radius, 0)
-      ..cubicTo(radius * 2, radius * 1.5, radius * 1.8, radius * 2, radius, radius * 2)
-      ..cubicTo(0.2 * radius, radius * 2, 0, radius * 1.5, radius, 0);
+    final double startX = startPos.x;
+    final double startY = startPos.y;
+    final double endX = targetPos.x;
+    final double endY = targetPos.y;
 
-    canvas.drawPath(path, paint);
+    // Control point for a natural liquid curve downward
+    final double midX = (startX + endX) / 2;
+    final double midY = max(startX, startY) < endY
+        ? (startY + endY) / 2 + 15
+        : (startY + endY) / 2;
+
+    final streamPath = Path()
+      ..moveTo(startX, startY)
+      ..quadraticBezierTo(midX, midY, endX, endY);
+
+    final highlightPath = Path()
+      ..moveTo(startX - 1.5, startY)
+      ..quadraticBezierTo(midX - 1.5, midY, endX - 1.5, endY);
+
+    // 1. Outer liquid glow aura
+    final glowPaint = Paint()
+      ..color = color.withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 12.0
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(streamPath, glowPaint);
+
+    // 2. Main fluid body
+    final bodyPaint = Paint()
+      ..color = color.withValues(alpha: 0.88)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 7.0
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(streamPath, bodyPaint);
+
+    // 3. Inner liquid specular highlight core
+    final highlightPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.55)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(highlightPath, highlightPaint);
+
+    // 4. Animated liquid pulse effect along stream
+    final double distance = startPos.distanceTo(targetPos);
+    if (distance > 20) {
+      final pulsePhase = (animationTime * 4.0) % 1.0;
+      final pulseX = startX + (endX - startX) * pulsePhase;
+      final pulseY = startY + (endY - startY) * pulsePhase;
+      canvas.drawCircle(
+        Offset(pulseX, pulseY),
+        3.5,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.7)
+          ..style = PaintingStyle.fill,
+      );
+    }
   }
 }
 
 class SplashRippleParticle extends PositionComponent {
   final Color color;
-  double radius = 4.0;
-  final double maxRadius = 35.0;
+  double radius = 3.0;
+  final double maxRadius = 32.0;
   double opacity = 1.0;
 
   SplashRippleParticle({
@@ -71,7 +136,7 @@ class SplashRippleParticle extends PositionComponent {
   @override
   void update(double dt) {
     super.update(dt);
-    radius += 60 * dt;
+    radius += 55 * dt;
     opacity = (1.0 - (radius / maxRadius)).clamp(0.0, 1.0);
     if (radius >= maxRadius) {
       removeFromParent();
@@ -82,9 +147,9 @@ class SplashRippleParticle extends PositionComponent {
   void render(Canvas canvas) {
     super.render(canvas);
     final paint = Paint()
-      ..color = color.withValues(alpha: opacity)
+      ..color = color.withValues(alpha: opacity * 0.8)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0;
+      ..strokeWidth = 2.5;
 
     canvas.drawCircle(Offset.zero, radius, paint);
   }
@@ -130,42 +195,48 @@ class VictoryStarParticle extends PositionComponent {
 class PaintMixingGame extends FlameGame {
   Color currentColor = Colors.white;
   Vector2 tileCenter = Vector2(200, 300);
+  LiquidStreamComponent? _activeStream;
 
   @override
   Color backgroundColor() => Colors.transparent;
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    _activeStream = LiquidStreamComponent();
+    add(_activeStream!);
+  }
 
   void triggerMixAnimation(Color resultColor) {
     currentColor = resultColor;
   }
 
-  void spawnDropletStream({
+  void startLiquidPour({
     required Vector2 bottleNozzlePos,
     required Color color,
     required Vector2 targetTilePos,
   }) {
     tileCenter = targetTilePos;
-    final random = Random();
+    _activeStream?.start(
+      startPos: bottleNozzlePos,
+      targetPos: targetTilePos,
+      color: color,
+    );
+  }
 
-    for (int i = 0; i < 3; i++) {
-      final offsetTarget = Vector2(
-        targetTilePos.x + (random.nextDouble() - 0.5) * 30,
-        targetTilePos.y + (random.nextDouble() - 0.5) * 30,
-      );
+  void updateLiquidPour({
+    required Vector2 bottleNozzlePos,
+    required Vector2 targetTilePos,
+  }) {
+    tileCenter = targetTilePos;
+    _activeStream?.updatePosition(
+      startPos: bottleNozzlePos,
+      targetPos: targetTilePos,
+    );
+  }
 
-      add(
-        DropletParticle(
-          position: bottleNozzlePos,
-          targetPosition: offsetTarget,
-          color: color,
-          onImpact: () {
-            add(SplashRippleParticle(
-              position: offsetTarget,
-              color: color,
-            ));
-          },
-        ),
-      );
-    }
+  void stopLiquidPour() {
+    _activeStream?.stop();
   }
 
   void triggerVictoryCelebration(Color winColor) {
@@ -198,3 +269,4 @@ class PaintMixingGame extends FlameGame {
     }
   }
 }
+
