@@ -640,8 +640,8 @@ class _HeroPotionBottlePainter extends CustomPainter {
     final double h = size.height;
 
     // ── 1. Sliced Wooden Log Disk Pedestal (Underneath Bottle) ────────────
-    final pedestalY = h * 0.58;
-    final pedestalW = w * 0.86;
+    final pedestalY = h * 0.54;
+    final pedestalW = w * 0.84;
     final pedestalH = h * 0.36;
     final pedestalX = (w - pedestalW) / 2;
 
@@ -681,14 +681,14 @@ class _HeroPotionBottlePainter extends CustomPainter {
     );
 
     // ── 2. Bulbous Sphere Potion Bottle ──────────────────────────────────
-    final bottleRadius = w * 0.26;
-    final bottleCenter = Offset(w * 0.5, h * 0.40);
+    final bottleRadius = w * 0.24;
+    final bottleCenter = Offset(w * 0.5, h * 0.5);
 
     // Cork Stopper
-    final corkW = w * 0.24;
-    final corkH = h * 0.10;
+    final corkW = w * 0.22;
+    final corkH = h * 0.08;
     final corkX = (w - corkW) / 2;
-    final corkY = h * 0.04;
+    final corkY = h * 0.05;
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -699,8 +699,8 @@ class _HeroPotionBottlePainter extends CustomPainter {
     );
 
     // Bottle Neck
-    final neckW = w * 0.20;
-    final neckH = h * 0.12;
+    final neckW = w * 0.18;
+    final neckH = h * 0.10;
     final neckX = (w - neckW) / 2;
     final neckY = corkY + corkH - 1;
 
