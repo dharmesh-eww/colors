@@ -11,4 +11,8 @@ class HomeScreenController extends StateController<HomeScreenBinding> {
   void settingsButtonClicked(BuildContext context) {
     Navigator.pushNamed(context, Routes.settingsScreen);
   }
+
+  void dailyChallengeClicked(BuildContext context) {
+    Navigator.pushNamed(context, Routes.playScreen, arguments: 1);
+  }
 }

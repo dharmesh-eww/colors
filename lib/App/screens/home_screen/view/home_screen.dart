@@ -14,7 +14,13 @@ class HomeScreen extends StatekitView<HomeScreenController> implements HomeScree
   }
 
   @override
-  void doSomething() {}
+  void playButtonClicked(BuildContext context) => controller.playButtonClicked(context);
+
+  @override
+  void settingsButtonClicked(BuildContext context) => controller.settingsButtonClicked(context);
+
+  @override
+  void dailyChallengeClicked(BuildContext context) => controller.dailyChallengeClicked(context);
 }
 
 class _HomeScreenBody extends StatefulWidget {
@@ -151,6 +157,13 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
                         letterSpacing: 0.8,
                       ),
                     ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // ── Today's Color Craft Challenge Banner ─────────────────
+                  _DailyChallengeBannerWidget(
+                    onTap: () => widget.controller.dailyChallengeClicked(context),
                   ),
 
                   const Spacer(),
@@ -627,4 +640,271 @@ class _HomeBeakerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _HomeBeakerPainter oldDelegate) => false;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Daily Challenge Banner Widget — Matches reference image frame
+// ──────────────────────────────────────────────────────────────────────────────
+class _DailyChallengeBannerWidget extends StatefulWidget {
+  final VoidCallback onTap;
+  const _DailyChallengeBannerWidget({required this.onTap});
+
+  @override
+  State<_DailyChallengeBannerWidget> createState() => _DailyChallengeBannerWidgetState();
+}
+
+class _DailyChallengeBannerWidgetState extends State<_DailyChallengeBannerWidget> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.94 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          height: 76,
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          child: CustomPaint(
+            painter: _DailyChallengeFramePainter(),
+            child: const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "TODAY'S COLOR",
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFFFFF1D6),
+                        letterSpacing: 2.2,
+                        height: 1.1,
+                        shadows: [
+                          Shadow(color: Color(0xFF381806), offset: Offset(0, 2.5), blurRadius: 4),
+                          Shadow(color: Color(0xFF1E0B02), offset: Offset(0, 4), blurRadius: 6),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'CRAFT CHALLENGE',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFFFFF1D6),
+                        letterSpacing: 2.5,
+                        height: 1.1,
+                        shadows: [
+                          Shadow(color: Color(0xFF381806), offset: Offset(0, 2.5), blurRadius: 4),
+                          Shadow(color: Color(0xFF1E0B02), offset: Offset(0, 4), blurRadius: 6),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Custom Painter for 3D Wood & Gold Frame with Side Wings & Top Flare Glow
+// ──────────────────────────────────────────────────────────────────────────────
+class _DailyChallengeFramePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+
+    const double wingSpace = 16.0;
+    final double frameX = wingSpace;
+    final double frameW = w - (wingSpace * 2);
+
+    // ── 1. Top Rainbow Light Flare Glow ──────────────────────────────────
+    final flareRect = Rect.fromLTWH(w * 0.15, -12, w * 0.7, 26);
+    final flarePaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFFFFF3A6).withValues(alpha: 0.6),
+          const Color(0xFFFFB04A).withValues(alpha: 0.35),
+          const Color(0xFFFF69B4).withValues(alpha: 0.15),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.4, 0.7, 1.0],
+      ).createShader(flareRect);
+    canvas.drawOval(flareRect, flarePaint);
+
+    // ── 2. Outer Drop Shadow Under Banner ────────────────────────────────
+    final pillRect = Rect.fromLTWH(frameX, 0, frameW, h);
+    final pillRRect = RRect.fromRectAndRadius(pillRect, Radius.circular(h * 0.44));
+
+    // Outer glow aura
+    canvas.drawRRect(
+      pillRRect,
+      Paint()
+        ..color = const Color(0xFFFFD700).withValues(alpha: 0.35)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+    );
+
+    // Deep wood drop shadow
+    canvas.drawRRect(
+      pillRRect.shift(const Offset(0, 4)),
+      Paint()
+        ..color = const Color(0xFF241004).withValues(alpha: 0.65)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+    );
+
+    // ── 3. Main Pill Body Fill ───────────────────────────────────────────
+    final fillPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [
+          Color(0xFF6E3B1C), // Deep chocolate top
+          Color(0xFF532911), // Mid warm oak
+          Color(0xFF421E0B), // Dark chocolate bottom
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(pillRect);
+    canvas.drawRRect(pillRRect, fillPaint);
+
+    // Top Glossy Highlight Rim inside Pill
+    final topHighlightRRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(frameX + 3, 2, frameW - 6, h * 0.4),
+      Radius.circular(h * 0.35),
+    );
+    canvas.drawRRect(
+      topHighlightRRect,
+      Paint()
+        ..shader = LinearGradient(
+          colors: [Colors.white.withValues(alpha: 0.14), Colors.white.withValues(alpha: 0.02)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(topHighlightRRect.outerRect),
+    );
+
+    // ── 4. Polished Gold Double Rim ──────────────────────────────────────
+    final outerGoldPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [
+          Color(0xFFFDE6A2), // Champagne top highlight
+          Color(0xFFD49E53), // Brass middle
+          Color(0xFFB87834), // Bronze edge
+          Color(0xFF8B5222), // Dark underside
+        ],
+        stops: [0.0, 0.35, 0.7, 1.0],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(pillRect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.2;
+    canvas.drawRRect(pillRRect, outerGoldPaint);
+
+    // Inner bevel stroke
+    final innerRimRRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(frameX + 3.5, 3.5, frameW - 7, h - 7),
+      Radius.circular((h - 7) * 0.44),
+    );
+    canvas.drawRRect(
+      innerRimRRect,
+      Paint()
+        ..color = const Color(0xFF8B5222).withValues(alpha: 0.5)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
+
+    // ── 5. Left & Right Ornamental Wing Brackets ─────────────────────────
+    _drawWing(canvas, size, isLeft: true);
+    _drawWing(canvas, size, isLeft: false);
+  }
+
+  void _drawWing(Canvas canvas, Size size, {required bool isLeft}) {
+    final double w = size.width;
+    final double h = size.height;
+
+    final double attachX = isLeft ? 16.0 : w - 16.0;
+    final double outerX = isLeft ? 1.0 : w - 1.0;
+    final double midX = isLeft ? 6.0 : w - 6.0;
+
+    final path = Path();
+    if (isLeft) {
+      path.moveTo(attachX + 6, h * 0.10);
+      path.cubicTo(attachX - 6, h * 0.08, outerX, h * 0.25, outerX, h * 0.5);
+      path.cubicTo(outerX, h * 0.75, attachX - 6, h * 0.92, attachX + 6, h * 0.90);
+      path.cubicTo(midX, h * 0.72, midX + 1, h * 0.5, attachX + 6, h * 0.10);
+    } else {
+      path.moveTo(attachX - 6, h * 0.10);
+      path.cubicTo(attachX + 6, h * 0.08, outerX, h * 0.25, outerX, h * 0.5);
+      path.cubicTo(outerX, h * 0.75, attachX + 6, h * 0.92, attachX - 6, h * 0.90);
+      path.cubicTo(midX, h * 0.72, midX - 1, h * 0.5, attachX - 6, h * 0.10);
+    }
+    path.close();
+
+    final bounds = path.getBounds();
+
+    // Wing 3D Fill
+    final wingFill = Paint()
+      ..shader = const LinearGradient(
+        colors: [
+          Color(0xFFFDE6A2), // Champagne top
+          Color(0xFFD49E53), // Polished brass
+          Color(0xFF9E5F27), // Bronze shadow
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(bounds);
+
+    canvas.drawPath(path, wingFill);
+
+    // Wing Outer Border
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = const Color(0xFF4A230D)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6,
+    );
+
+    // Center Diamond Gemstone
+    final double diamondCenterX = isLeft ? 7.5 : w - 7.5;
+    final double diamondCenterY = h * 0.5;
+    final double dH = 7.5;
+    final double dW = 5.5;
+
+    final diamondPath = Path()
+      ..moveTo(diamondCenterX, diamondCenterY - dH)
+      ..lineTo(diamondCenterX + dW, diamondCenterY)
+      ..lineTo(diamondCenterX, diamondCenterY + dH)
+      ..lineTo(diamondCenterX - dW, diamondCenterY)
+      ..close();
+
+    // Diamond Inner Fill
+    canvas.drawPath(diamondPath, Paint()..color = const Color(0xFF5A2C11));
+
+    // Diamond Gold Rim
+    canvas.drawPath(
+      diamondPath,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFFFFF2A1), Color(0xFFD49E53)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ).createShader(diamondPath.getBounds())
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
