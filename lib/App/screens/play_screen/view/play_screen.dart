@@ -98,7 +98,7 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                       targetColor: ctrl.targetColor,
                       targetHex: ctrl.targetHex,
                       onBack: () => Navigator.pop(context),
-                      onReset: () => ctrl.initNewTarget(),
+                      onReset: () => ctrl.resetMix(),
                     ),
 
                     // ── Central Mixing Station ────────────────────────────────

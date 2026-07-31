@@ -1,12 +1,14 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
+import '../../../core/puzzle/puzzle_generator.dart';
+import '../../../core/services/level_storage_service.dart';
 import '../../../game/paint_background_game.dart';
 import '../binding/level_selection_binding.dart';
 import '../controller/level_selection_controller.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Level Data Model (1000 levels)
+// Level Data Model
 // ─────────────────────────────────────────────────────────────────────────────
 enum _LevelState { completed, playing, locked }
 
@@ -24,40 +26,8 @@ class _LevelData {
   });
 }
 
-// Generate 1000 levels: 1-15 completed, 16 current playing, 17-1000 locked
-final List<_LevelData> _levels = List.generate(1000, (index) {
-  final levelNum = index + 1;
-  if (levelNum < 16) {
-    // Completed level with 2 or 3 stars
-    final stars = (levelNum % 3 == 0) ? 2 : 3;
-    final hue = (levelNum * 25.0) % 360.0;
-    final color = HSVColor.fromAHSV(1.0, hue, 0.75, 0.85).toColor();
-    return _LevelData(
-      number: levelNum,
-      state: _LevelState.completed,
-      stars: stars,
-      targetColor: color,
-    );
-  } else if (levelNum == 16) {
-    // Current on-going / active playing level
-    return const _LevelData(
-      number: 16,
-      state: _LevelState.playing,
-      stars: 0,
-      targetColor: Color(0xFF008080),
-    );
-  } else {
-    // Next locked levels
-    return _LevelData(
-      number: levelNum,
-      state: _LevelState.locked,
-      stars: 0,
-      targetColor: const Color(0xFF4A4A4A),
-    );
-  }
-});
-
 // Grid configuration
+const int _totalLevelsCount = 1000;
 const int _columns = 4;
 const int _rows = 5;
 const int _itemsPerPage = _columns * _rows; // 20 items per page
@@ -90,13 +60,15 @@ class _LevelSelectionBody extends StatefulWidget {
 
 class _LevelSelectionBodyState extends State<_LevelSelectionBody>
     with SingleTickerProviderStateMixin {
+  final LevelStorageService _levelStorageService = LevelStorageService();
   late PaintBackgroundGame _bgGame;
   late AnimationController _glowController;
   late Animation<double> _glowAnimation;
   late PageController _pageController;
 
   int _currentPage = 0;
-  final int _totalPages = (_levels.length / _itemsPerPage).ceil();
+  int _unlockedLevel = 1;
+  final int _totalPages = (_totalLevelsCount / _itemsPerPage).ceil();
 
   @override
   void initState() {
@@ -112,12 +84,23 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _glowController, curve: Curves.easeInOut));
 
-    // Default to the page containing the current playing level (Level 16 -> Page 0)
-    final playingIndex = _levels.indexWhere((l) => l.state == _LevelState.playing);
-    if (playingIndex != -1) {
-      _currentPage = (playingIndex / _itemsPerPage).floor();
+    _pageController = PageController(initialPage: 0);
+    _loadUnlockedLevel();
+  }
+
+  void _loadUnlockedLevel() async {
+    final unlocked = await _levelStorageService.getUnlockedLevel();
+    if (mounted) {
+      setState(() {
+        _unlockedLevel = unlocked;
+        final targetPage =
+            ((_unlockedLevel - 1) / _itemsPerPage).floor().clamp(0, _totalPages - 1);
+        _currentPage = targetPage;
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(_currentPage);
+        }
+      });
     }
-    _pageController = PageController(initialPage: _currentPage);
   }
 
   @override
@@ -127,7 +110,7 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
     super.dispose();
   }
 
-  int get _completedCount => _levels.where((l) => l.state == _LevelState.completed).length;
+  int get _completedCount => (_unlockedLevel - 1).clamp(0, _totalLevelsCount);
 
   void _goToPage(int page) {
     if (page >= 0 && page < _totalPages) {
@@ -135,6 +118,38 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
         page,
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  _LevelData _getLevelData(int itemIndex) {
+    final levelNum = itemIndex + 1;
+    final puzzle = PuzzleGenerator.generateLevel(levelNum);
+
+    if (levelNum < _unlockedLevel) {
+      // Completed level
+      final stars = (levelNum % 3 == 0) ? 2 : 3;
+      return _LevelData(
+        number: levelNum,
+        state: _LevelState.completed,
+        stars: stars,
+        targetColor: puzzle.targetColor,
+      );
+    } else if (levelNum == _unlockedLevel) {
+      // Current active playing level
+      return _LevelData(
+        number: levelNum,
+        state: _LevelState.playing,
+        stars: 0,
+        targetColor: puzzle.targetColor,
+      );
+    } else {
+      // Locked level
+      return _LevelData(
+        number: levelNum,
+        state: _LevelState.locked,
+        stars: 0,
+        targetColor: const Color(0xFF4A4A4A),
       );
     }
   }
@@ -154,12 +169,12 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // ── Header Panel ──────────────────────────────────────────
-                _Header(completedCount: _completedCount, totalCount: _levels.length),
+                _Header(completedCount: _completedCount, totalCount: _totalLevelsCount),
 
                 const SizedBox(height: 6),
 
                 // ── Total Progress Bar ────────────────────────────────────
-                _ProgressBar(completed: _completedCount, total: _levels.length),
+                _ProgressBar(completed: _completedCount, total: _totalLevelsCount),
 
                 const SizedBox(height: 8),
 
@@ -234,7 +249,6 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
   }
 
   /// Custom 4x5 Grid implementation built using Column + Row + Expanded (No GridView)
-  /// Guarantees zero layout overflow on all device screen sizes.
   Widget _buildCustomGridPage(int pageIndex) {
     return Column(
       children: List.generate(_rows, (rowIndex) {
@@ -243,11 +257,11 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
             children: List.generate(_columns, (colIndex) {
               final itemIndex = pageIndex * _itemsPerPage + rowIndex * _columns + colIndex;
 
-              if (itemIndex >= _levels.length) {
+              if (itemIndex >= _totalLevelsCount) {
                 return const Expanded(child: SizedBox());
               }
 
-              final level = _levels[itemIndex];
+              final level = _getLevelData(itemIndex);
               return Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(3.5),
@@ -255,7 +269,10 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
                     level: level,
                     glowValue: _glowAnimation.value,
                     onTap: level.state != _LevelState.locked
-                        ? () => widget.controller.onLevelTapped(context, itemIndex)
+                        ? () async {
+                            await widget.controller.onLevelTapped(context, itemIndex);
+                            _loadUnlockedLevel();
+                          }
                         : null,
                   ),
                 ),

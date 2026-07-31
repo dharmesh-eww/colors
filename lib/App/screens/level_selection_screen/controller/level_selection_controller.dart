@@ -5,8 +5,8 @@ import '../binding/level_selection_binding.dart';
 
 class LevelSelectionController
     extends StateController<LevelSelectionBinding> {
-  void onLevelTapped(BuildContext context, int levelIndex) {
-    Navigator.pushNamed(
+  Future<void> onLevelTapped(BuildContext context, int levelIndex) async {
+    await Navigator.pushNamed(
       context,
       Routes.playScreen,
       arguments: levelIndex + 1,

@@ -6,9 +6,11 @@ import '../../../core/puzzle/puzzle_model.dart';
 import '../../../game/paint_mixing_game.dart';
 import '../binding/play_screen_binding.dart';
 import '../repository/play_screen_repository.dart';
+import '../../../core/services/level_storage_service.dart';
 
 class PlayScreenController extends StateController<PlayScreenBinding> {
   final PlayScreenRepository _repository = PlayScreenRepository();
+  final LevelStorageService _levelStorageService = LevelStorageService();
 
   int _currentLevelNumber = 1;
   PuzzleLevel? _currentPuzzle;
@@ -121,6 +123,9 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
       _isCompleted = true;
       flameGame?.triggerVictoryCelebration(_mixedColor);
 
+      // Save unlocked level progress securely
+      _levelStorageService.unlockNextLevel(_currentLevelNumber);
+
       Future.delayed(const Duration(milliseconds: 2500), () {
         initNewTarget();
       });
@@ -131,6 +136,7 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
 
   void resetMix() {
     _resetPaintsInternal();
+    _isCompleted = false;
     update();
   }
 
