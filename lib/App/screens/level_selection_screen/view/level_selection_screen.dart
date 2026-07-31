@@ -649,13 +649,13 @@ class _HeroPotionBottlePainter extends CustomPainter {
     canvas.drawOval(
       Rect.fromLTWH(pedestalX, pedestalY + pedestalH * 0.4, pedestalW, pedestalH * 0.6),
       Paint()
-        ..color = Colors.black.withValues(alpha: isLocked ? 0.2 : 0.35)
+        ..color = Colors.black.withValues(alpha: 0.35)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
     );
 
     // Pedestal bottom plank thickness edge
-    final woodRimColor = isLocked ? const Color(0xFF616161) : const Color(0xFF8D6228);
-    final woodTopColor = isLocked ? const Color(0xFF9E9E9E) : const Color(0xFFC68B59);
+    const woodRimColor = Color(0xFF8D6228);
+    const woodTopColor = Color(0xFFC68B59);
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -675,9 +675,7 @@ class _HeroPotionBottlePainter extends CustomPainter {
     canvas.drawOval(
       Rect.fromLTWH(pedestalX + 3, pedestalY + 1.5, pedestalW - 6, (pedestalH * 0.75) - 3),
       Paint()
-        ..color = isLocked
-            ? Colors.white.withValues(alpha: 0.15)
-            : const Color(0xFFE5AA70).withValues(alpha: 0.4)
+        ..color = const Color(0xFFE5AA70).withValues(alpha: 0.4)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0,
     );
