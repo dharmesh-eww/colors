@@ -58,6 +58,12 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
     });
   }
 
+  @override
+  void dispose() {
+    widget.controller.stopTimer();
+    super.dispose();
+  }
+
   void _calculateTileArea() {
     final RenderBox? renderBox =
         _mixingTileKey.currentContext?.findRenderObject() as RenderBox?;
@@ -97,6 +103,8 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                     _TargetColorHeader(
                       targetColor: ctrl.targetColor,
                       targetHex: ctrl.targetHex,
+                      levelNumber: ctrl.currentLevelNumber,
+                      formattedTime: ctrl.formattedTime,
                       onBack: () => Navigator.pop(context),
                       onReset: () => ctrl.resetMix(),
                     ),
@@ -137,6 +145,7 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                 _VictoryOverlay(
                   accuracy: ctrl.accuracy,
                   mixedColor: ctrl.mixedColor,
+                  formattedTime: ctrl.formattedTime,
                 ),
             ],
           );
@@ -152,12 +161,16 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
 class _TargetColorHeader extends StatelessWidget {
   final Color targetColor;
   final String targetHex;
+  final int levelNumber;
+  final String formattedTime;
   final VoidCallback onBack;
   final VoidCallback onReset;
 
   const _TargetColorHeader({
     required this.targetColor,
     required this.targetHex,
+    required this.levelNumber,
+    required this.formattedTime,
     required this.onBack,
     required this.onReset,
   });
@@ -211,27 +224,66 @@ class _TargetColorHeader extends StatelessWidget {
             ),
           ),
 
-          // Target Color label + hex badge (centered)
+          // Target Color label + timer + hex badge (centered)
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'TARGET COLOR',
-                  style: TextStyle(
-                    color: Color(0xFF5D4037),
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                    letterSpacing: 1.8,
-                    shadows: [
-                      Shadow(
-                          color: Color(0x33000000),
-                          offset: Offset(0, 1),
-                          blurRadius: 2),
-                    ],
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'LEVEL $levelNumber',
+                      style: const TextStyle(
+                        color: Color(0xFF5D4037),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        letterSpacing: 1.4,
+                        shadows: [
+                          Shadow(
+                            color: Color(0x33000000),
+                            offset: Offset(0, 1),
+                            blurRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 4,
+                      height: 4,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF8D6228),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.timer_outlined,
+                      size: 14,
+                      color: Color(0xFF5D4037),
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      formattedTime,
+                      style: const TextStyle(
+                        color: Color(0xFF5D4037),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                        fontFamily: 'monospace',
+                        letterSpacing: 1.0,
+                        shadows: [
+                          Shadow(
+                            color: Color(0x33000000),
+                            offset: Offset(0, 1),
+                            blurRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 5),
                 // Teal rounded pill with hex code
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 350),
@@ -413,8 +465,13 @@ class _ShelfGrainPainter extends CustomPainter {
 class _VictoryOverlay extends StatelessWidget {
   final double accuracy;
   final Color mixedColor;
+  final String formattedTime;
 
-  const _VictoryOverlay({required this.accuracy, required this.mixedColor});
+  const _VictoryOverlay({
+    required this.accuracy,
+    required this.mixedColor,
+    required this.formattedTime,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -480,23 +537,58 @@ class _VictoryOverlay extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF00C853).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border:
-                        Border.all(color: const Color(0xFF00C853), width: 1.5),
-                  ),
-                  child: Text(
-                    'Accuracy: ${accuracy.toStringAsFixed(1)}%',
-                    style: const TextStyle(
-                      color: Color(0xFF1B5E20),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00C853).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border:
+                            Border.all(color: const Color(0xFF00C853), width: 1.5),
+                      ),
+                      child: Text(
+                        'Accuracy: ${accuracy.toStringAsFixed(1)}%',
+                        style: const TextStyle(
+                          color: Color(0xFF1B5E20),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF5D4037).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                        border:
+                            Border.all(color: const Color(0xFF5D4037), width: 1.5),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.timer_outlined,
+                            size: 16,
+                            color: Color(0xFF5D4037),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            formattedTime,
+                            style: const TextStyle(
+                              color: Color(0xFF5D4037),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
                 const SizedBox(

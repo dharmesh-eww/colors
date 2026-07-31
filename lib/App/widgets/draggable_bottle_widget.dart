@@ -45,7 +45,7 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
   @override
   void didUpdateWidget(covariant DraggableBottleWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.bottle.availableMl != widget.bottle.availableMl) {
+    if (_availableMlNotifier.value != widget.bottle.availableMl) {
       _availableMlNotifier.value = widget.bottle.availableMl;
     }
   }

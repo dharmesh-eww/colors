@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
 import '../../../core/models/paint_model.dart';
@@ -29,6 +30,9 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
 
   PlayScreenController();
 
+  Timer? _timer;
+  int _elapsedSeconds = 0;
+
   // Getters
   int get currentLevelNumber => _currentLevelNumber;
   PuzzleLevel? get currentPuzzle => _currentPuzzle;
@@ -41,12 +45,40 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   List<PaintBottle> get bottles => _bottles.values.toList();
   PaintBottle? get selectedBottle => _bottles[_selectedType];
 
+  int get elapsedSeconds => _elapsedSeconds;
+
+  String get formattedTime {
+    final minutes = (_elapsedSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (_elapsedSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
   String get targetHex => _currentPuzzle?.targetHex ?? _colorToHex(_targetColor);
 
   @override
   void onInit() {
     super.onInit();
     loadLevel(1);
+  }
+
+  void startTimer() {
+    _timer?.cancel();
+    _elapsedSeconds = 0;
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _elapsedSeconds++;
+      update();
+    });
+  }
+
+  void stopTimer() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  @override
+  void dispose() {
+    stopTimer();
+    super.dispose();
   }
 
   void attachFlameGame(PaintMixingGame game) {
@@ -69,6 +101,7 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
 
     _resetPaintsInternal();
     _isCompleted = false;
+    startTimer();
     update();
   }
 
@@ -82,9 +115,12 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   }
 
   void _resetPaintsInternal() {
-    for (var bottle in _bottles.values) {
-      bottle.availableMl = 100.0;
-      bottle.pouredMl = 0.0;
+    final keys = _bottles.keys.toList();
+    for (var key in keys) {
+      final bottle = _bottles[key];
+      if (bottle != null) {
+        _bottles[key] = bottle.copyWith(availableMl: 100.0, pouredMl: 0.0);
+      }
     }
     _mixedColor = const Color(0xFFFFFFFF);
     _accuracy = 0.0;
@@ -121,6 +157,7 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   void checkCompletionOnPourEnd() {
     if (_accuracy >= 95.0 && !_isCompleted) {
       _isCompleted = true;
+      stopTimer();
       flameGame?.triggerVictoryCelebration(_mixedColor);
 
       // Save unlocked level progress securely
