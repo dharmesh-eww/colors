@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
+import '../../../core/enums/bottle_interaction_mode.dart';
 import '../binding/settings_screen_binding.dart';
 import '../repository/settings_screen_repository.dart';
 
@@ -8,6 +9,7 @@ class SettingsScreenController extends StateController<SettingsScreenBinding> {
 
   bool soundEnabled = true;
   double soundVolume = 0.8;
+  BottleInteractionMode bottleInteractionMode = BottleInteractionMode.drag;
   bool isLoading = true;
   final String gameVersion = '1.0.0';
 
@@ -22,6 +24,7 @@ class SettingsScreenController extends StateController<SettingsScreenBinding> {
     update();
     soundEnabled = await _repository.loadSoundEnabled();
     soundVolume = await _repository.loadSoundVolume();
+    bottleInteractionMode = await _repository.loadBottleInteractionMode();
     isLoading = false;
     update();
   }
@@ -36,6 +39,12 @@ class SettingsScreenController extends StateController<SettingsScreenBinding> {
     soundVolume = value.clamp(0.0, 1.0);
     update();
     await _repository.saveSoundVolume(soundVolume);
+  }
+
+  void updateBottleInteractionMode(BottleInteractionMode mode) async {
+    bottleInteractionMode = mode;
+    update();
+    await _repository.saveBottleInteractionMode(mode);
   }
 
   void resetGameProgress(BuildContext context) async {

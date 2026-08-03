@@ -1,3 +1,4 @@
+import '../../../core/enums/bottle_interaction_mode.dart';
 import '../../../core/services/level_storage_service.dart';
 import '../../../core/services/settings_storage_service.dart';
 
@@ -10,6 +11,12 @@ class SettingsScreenRepository {
 
   Future<double> loadSoundVolume() => _settingsStorage.getSoundVolume();
   Future<void> saveSoundVolume(double volume) => _settingsStorage.setSoundVolume(volume);
+
+  Future<BottleInteractionMode> loadBottleInteractionMode() =>
+      _settingsStorage.getBottleInteractionMode();
+
+  Future<void> saveBottleInteractionMode(BottleInteractionMode mode) =>
+      _settingsStorage.setBottleInteractionMode(mode);
 
   Future<void> resetProgress() => _levelStorage.resetProgress();
 }

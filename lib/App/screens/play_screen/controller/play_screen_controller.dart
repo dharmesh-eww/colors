@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
+import '../../../core/enums/bottle_interaction_mode.dart';
 import '../../../core/models/paint_model.dart';
 import '../../../core/puzzle/puzzle_generator.dart';
 import '../../../core/puzzle/puzzle_model.dart';
@@ -25,6 +26,7 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   double _accuracy = 0.0;
   bool _isMixed = false;
   bool _isCompleted = false;
+  BottleInteractionMode _bottleInteractionMode = BottleInteractionMode.drag;
 
   final Map<PaintType, PaintBottle> _bottles = {};
 
@@ -36,6 +38,17 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   int _elapsedSeconds = 0;
   int _remainingSeconds = 120;
   bool _isTimeUp = false;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadInteractionMode();
+  }
+
+  Future<void> _loadInteractionMode() async {
+    _bottleInteractionMode = await _repository.loadBottleInteractionMode();
+    update();
+  }
 
   // Getters
   int get currentLevelNumber => _currentLevelNumber;
@@ -52,12 +65,14 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   double get accuracy => _accuracy;
   bool get isMixed => _isMixed;
   bool get isCompleted => _isCompleted;
+  BottleInteractionMode get bottleInteractionMode => _bottleInteractionMode;
   List<PaintBottle> get bottles => _bottles.values.toList();
   PaintBottle? get selectedBottle => _bottles[_selectedType];
 
   int get elapsedSeconds => _elapsedSeconds;
 
   String get formattedTime {
+
     final int totalSecs = isCountdownMode ? _remainingSeconds : _elapsedSeconds;
     final minutes = (totalSecs ~/ 60).toString().padLeft(2, '0');
     final seconds = (totalSecs % 60).toString().padLeft(2, '0');

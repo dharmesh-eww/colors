@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
+import '../../../core/enums/bottle_interaction_mode.dart';
 import '../../../core/models/paint_model.dart';
 import '../../../core/puzzle/puzzle_model.dart';
 import '../../../game/paint_background_game.dart';
@@ -10,6 +11,7 @@ import '../../../widgets/draggable_bottle_widget.dart';
 import '../../../widgets/mixing_tile_widget.dart';
 import '../binding/play_screen_binding.dart';
 import '../controller/play_screen_controller.dart';
+
 
 class PlayScreen extends StatekitView<PlayScreenController> implements PlayScreenBinding {
   PlayScreen({super.key, super.tag});
@@ -134,10 +136,12 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                       selectedType: ctrl.selectedType,
                       mixingTileArea: _mixingTileArea,
                       flameGame: _flameGame,
+                      bottleInteractionMode: ctrl.bottleInteractionMode,
                       onTap: (type) => ctrl.selectColorType(type),
                       onPourContinuous: (type, ml, pos) => ctrl.pourPaintType(type, ml),
                       onPourEnd: () => ctrl.checkCompletionOnPourEnd(),
                     ),
+
                   ],
                 ),
               ),
@@ -400,6 +404,7 @@ class _WoodenShelf extends StatelessWidget {
   final PaintType selectedType;
   final Rect mixingTileArea;
   final PaintMixingGame flameGame;
+  final BottleInteractionMode bottleInteractionMode;
   final Function(PaintType) onTap;
   final Function(PaintType, double, Offset) onPourContinuous;
   final VoidCallback onPourEnd;
@@ -409,6 +414,7 @@ class _WoodenShelf extends StatelessWidget {
     required this.selectedType,
     required this.mixingTileArea,
     required this.flameGame,
+    this.bottleInteractionMode = BottleInteractionMode.drag,
     required this.onTap,
     required this.onPourContinuous,
     required this.onPourEnd,
@@ -437,6 +443,7 @@ class _WoodenShelf extends StatelessWidget {
                   isSelected: selectedType == bottle.type,
                   mixingTileArea: mixingTileArea,
                   flameGame: flameGame,
+                  bottleInteractionMode: bottleInteractionMode,
                   onTap: () => onTap(bottle.type),
                   onPourContinuous: onPourContinuous,
                   onPourEnd: onPourEnd,
@@ -445,6 +452,7 @@ class _WoodenShelf extends StatelessWidget {
             ),
           ),
         ),
+
 
         // ── Wooden Shelf Plank ──────────────────────────────────────────────
         Container(

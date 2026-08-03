@@ -1,9 +1,11 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../enums/bottle_interaction_mode.dart';
 
 /// Service for persisting app and sound settings.
 class SettingsStorageService {
   static const String _soundEnabledKey = 'sound_enabled';
   static const String _soundVolumeKey = 'sound_volume';
+  static const String _bottleInteractionModeKey = 'bottle_interaction_mode';
 
   final FlutterSecureStorage _storage;
 
@@ -54,4 +56,29 @@ class SettingsStorageService {
       );
     } catch (_) {}
   }
+
+  /// Retrieves the bottle interaction mode (default: BottleInteractionMode.drag).
+  Future<BottleInteractionMode> getBottleInteractionMode() async {
+    try {
+      final String? value = await _storage.read(key: _bottleInteractionModeKey);
+      if (value != null) {
+        return BottleInteractionMode.values.firstWhere(
+          (mode) => mode.name == value,
+          orElse: () => BottleInteractionMode.drag,
+        );
+      }
+    } catch (_) {}
+    return BottleInteractionMode.drag;
+  }
+
+  /// Saves the bottle interaction mode.
+  Future<void> setBottleInteractionMode(BottleInteractionMode mode) async {
+    try {
+      await _storage.write(
+        key: _bottleInteractionModeKey,
+        value: mode.name,
+      );
+    } catch (_) {}
+  }
 }
+

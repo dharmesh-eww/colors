@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart' hide Matrix4;
+import '../core/enums/bottle_interaction_mode.dart';
 import '../core/models/paint_model.dart';
 import '../game/paint_mixing_game.dart';
 
@@ -13,6 +14,7 @@ class DraggableBottleWidget extends StatefulWidget {
   final VoidCallback? onPourEnd;
   final PaintMixingGame? flameGame;
   final Rect mixingTileArea;
+  final BottleInteractionMode bottleInteractionMode;
 
   const DraggableBottleWidget({
     super.key,
@@ -23,11 +25,13 @@ class DraggableBottleWidget extends StatefulWidget {
     this.onPourEnd,
     this.flameGame,
     required this.mixingTileArea,
+    this.bottleInteractionMode = BottleInteractionMode.drag,
   });
 
   @override
   State<DraggableBottleWidget> createState() => _DraggableBottleWidgetState();
 }
+
 
 class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
   bool _isOverTile = false;
@@ -104,6 +108,98 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
     widget.onPourEnd?.call();
   }
 
+  Offset _getBottleGlobalPosition() {
+    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox != null) {
+      final pos = renderBox.localToGlobal(Offset.zero);
+      final size = renderBox.size;
+      return Offset(pos.dx + size.width / 2, pos.dy + 15);
+    }
+    return widget.mixingTileArea.center;
+  }
+
+  void _handleTapPour() {
+    if (widget.bottle.availableMl <= 0) return;
+    final bottlePos = _getBottleGlobalPosition();
+
+    widget.onPourContinuous(widget.bottle.type, 5.0, bottlePos);
+    _availableMlNotifier.value = widget.bottle.availableMl;
+
+    if (widget.flameGame != null) {
+      widget.flameGame!.startLiquidPour(
+        bottleNozzlePos: Vector2(bottlePos.dx, bottlePos.dy),
+        color: widget.bottle.color,
+        targetTilePos: Vector2(
+          widget.mixingTileArea.center.dx,
+          widget.mixingTileArea.center.dy,
+        ),
+      );
+      Timer(const Duration(milliseconds: 300), () {
+        widget.flameGame?.stopLiquidPour();
+        widget.onPourEnd?.call();
+      });
+    } else {
+      widget.onPourEnd?.call();
+    }
+  }
+
+  void _startTapPouring() {
+    _pourTimer?.cancel();
+    _rotationDelayTimer?.cancel();
+
+    final bottlePos = _getBottleGlobalPosition();
+    setState(() {
+      _isOverTile = true;
+    });
+
+    if (widget.flameGame != null) {
+      widget.flameGame!.startLiquidPour(
+        bottleNozzlePos: Vector2(bottlePos.dx, bottlePos.dy),
+        color: widget.bottle.color,
+        targetTilePos: Vector2(
+          widget.mixingTileArea.center.dx,
+          widget.mixingTileArea.center.dy,
+        ),
+      );
+    }
+
+    _pourTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      if (widget.bottle.availableMl <= 0) {
+        _stopTapPouring();
+        return;
+      }
+
+      final currentPos = _getBottleGlobalPosition();
+      widget.onPourContinuous(widget.bottle.type, 2.5, currentPos);
+      _availableMlNotifier.value = widget.bottle.availableMl;
+
+      if (widget.flameGame != null) {
+        widget.flameGame!.updateLiquidPour(
+          bottleNozzlePos: Vector2(currentPos.dx, currentPos.dy),
+          targetTilePos: Vector2(
+            widget.mixingTileArea.center.dx,
+            widget.mixingTileArea.center.dy,
+          ),
+        );
+      }
+    });
+  }
+
+  void _stopTapPouring() {
+    _pourTimer?.cancel();
+    _pourTimer = null;
+    _rotationDelayTimer?.cancel();
+    _rotationDelayTimer = null;
+    widget.flameGame?.stopLiquidPour();
+    if (_isOverTile) {
+      setState(() {
+        _isOverTile = false;
+      });
+    }
+    widget.onPourEnd?.call();
+  }
+
+
   @override
   void dispose() {
     _rotationDelayTimer?.cancel();
@@ -175,9 +271,26 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
     final Color labelColor = (isBlack || isWhite) ? const Color(0xFF5D4037) : bottleColor;
 
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: () {
+        widget.onTap();
+        if (widget.bottleInteractionMode == BottleInteractionMode.tap) {
+          _handleTapPour();
+        }
+      },
+      onLongPressStart: (_) {
+        widget.onTap();
+        if (widget.bottleInteractionMode == BottleInteractionMode.tap) {
+          _startTapPouring();
+        }
+      },
+      onLongPressEnd: (_) {
+        if (widget.bottleInteractionMode == BottleInteractionMode.tap) {
+          _stopTapPouring();
+        }
+      },
       behavior: HitTestBehavior.opaque,
       child: Transform.translate(
+
         offset: Offset(0, widget.isSelected ? -6 : 0),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -189,6 +302,7 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
               // ── Draggable Ink Bottle ──────────────────────────────────────
               Draggable<PaintType>(
                 data: bottle.type,
+                maxSimultaneousDrags: widget.bottleInteractionMode == BottleInteractionMode.drag ? 1 : 0,
                 feedback: Material(
                   color: Colors.transparent,
                   child: _buildInkBottle(isDragging: true, isTilted: _isOverTile),
@@ -200,6 +314,7 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
                 onDragStarted: () {
                   widget.onTap();
                 },
+
                 onDragUpdate: (details) {
                   _currentDragGlobalPos = details.globalPosition;
                   final bool isCurrentlyOverTile = widget.mixingTileArea.contains(

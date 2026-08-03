@@ -2,9 +2,11 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
 
+import '../../../core/enums/bottle_interaction_mode.dart';
 import '../../../game/paint_background_game.dart';
 import '../binding/settings_screen_binding.dart';
 import '../controller/settings_screen_controller.dart';
+
 
 class SettingsScreen extends StatekitView<SettingsScreenController> implements SettingsScreenBinding {
   SettingsScreen({super.key, super.tag});
@@ -83,6 +85,15 @@ class _SettingsScreenBodyState extends State<_SettingsScreenBody> {
                                   ),
 
                                   const SizedBox(height: 16),
+
+                                  // ── Card 2: Bottle Mixing Mode Settings ─────
+                                  _BottleMixingSettingsCard(
+                                    currentMode: ctrl.bottleInteractionMode,
+                                    onModeChanged: (mode) => ctrl.updateBottleInteractionMode(mode),
+                                  ),
+
+                                  const SizedBox(height: 16),
+
                                 ],
                               ),
                             ),
@@ -402,9 +413,158 @@ class _SoundSettingsCard extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Card 2: Bottle Mixing Mode Settings Card
+// ──────────────────────────────────────────────────────────────────────────────
+class _BottleMixingSettingsCard extends StatelessWidget {
+  final BottleInteractionMode currentMode;
+  final ValueChanged<BottleInteractionMode> onModeChanged;
+
+  const _BottleMixingSettingsCard({
+    required this.currentMode,
+    required this.onModeChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _ThemeCardContainer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Section Header
+          const _CardHeader(
+            icon: Icons.touch_app_rounded,
+            title: 'BOTTLE MIXING MODE',
+          ),
+          const SizedBox(height: 14),
+
+          // Option 1: Drag to Mix (Default)
+          _ModeOptionTile(
+            title: 'Drag to Mix (Default)',
+            subtitle: 'Drag bottle from shelf into color mixing view to pour',
+            icon: Icons.drag_indicator_rounded,
+            isSelected: currentMode == BottleInteractionMode.drag,
+            onTap: () => onModeChanged(BottleInteractionMode.drag),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Option 2: Tap & Hold to Mix
+          _ModeOptionTile(
+            title: 'Tap & Hold to Mix',
+            subtitle: 'Tap or long press bottle in list to mix color in mixing view',
+            icon: Icons.ads_click_rounded,
+            isSelected: currentMode == BottleInteractionMode.tap,
+            onTap: () => onModeChanged(BottleInteractionMode.tap),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModeOptionTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ModeOptionTile({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF5D4037).withValues(alpha: 0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFD4A055) : const Color(0xFFD4A055).withValues(alpha: 0.3),
+            width: isSelected ? 1.8 : 1.0,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFFFFD700) : const Color(0xFF5D4037).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? const Color(0xFF5D4037) : const Color(0xFFD4A055).withValues(alpha: 0.4),
+                  width: 1.2,
+                ),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? const Color(0xFF3B1E08) : const Color(0xFF8D6228),
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: const Color(0xFF5D4037),
+                      fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: const Color(0xFF8D6228).withValues(alpha: 0.9),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? const Color(0xFF5D4037) : const Color(0xFF8D6228).withValues(alpha: 0.5),
+                  width: 2,
+                ),
+                color: isSelected ? const Color(0xFFFFD700) : Colors.transparent,
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check_rounded, size: 14, color: Color(0xFF3B1E08))
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Bottom Game Version Footer Badge (1.0.0)
 // ──────────────────────────────────────────────────────────────────────────────
 class _GameVersionFooter extends StatelessWidget {
+
   final String version;
   const _GameVersionFooter({required this.version});
 
