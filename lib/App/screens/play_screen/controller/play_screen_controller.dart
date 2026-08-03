@@ -28,6 +28,9 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   bool _isCompleted = false;
   BottleInteractionMode _bottleInteractionMode = BottleInteractionMode.drag;
 
+  int _restartCount = 0;
+  int _earnedStars = 0;
+
   final Map<PaintType, PaintBottle> _bottles = {};
 
   PaintMixingGame? flameGame;
@@ -66,13 +69,14 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   bool get isMixed => _isMixed;
   bool get isCompleted => _isCompleted;
   BottleInteractionMode get bottleInteractionMode => _bottleInteractionMode;
+  int get restartCount => _restartCount;
+  int get earnedStars => _earnedStars;
   List<PaintBottle> get bottles => _bottles.values.toList();
   PaintBottle? get selectedBottle => _bottles[_selectedType];
 
   int get elapsedSeconds => _elapsedSeconds;
 
   String get formattedTime {
-
     final int totalSecs = isCountdownMode ? _remainingSeconds : _elapsedSeconds;
     final minutes = (totalSecs ~/ 60).toString().padLeft(2, '0');
     final seconds = (totalSecs % 60).toString().padLeft(2, '0');
@@ -134,6 +138,8 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
       _selectedType = _bottles.keys.first;
     }
 
+    _restartCount = 0;
+    _earnedStars = 0;
     _resetPaintsInternal();
     _isCompleted = false;
     _isTimeUp = false;
@@ -142,6 +148,7 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   }
 
   void retryChallenge() {
+    _restartCount++;
     _resetPaintsInternal();
     _isCompleted = false;
     _isTimeUp = false;
@@ -164,6 +171,8 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
       _selectedType = _bottles.keys.first;
     }
 
+    _restartCount = 0;
+    _earnedStars = 0;
     _resetPaintsInternal();
     _isCompleted = false;
     startTimer();
@@ -223,25 +232,51 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
     update();
   }
 
+  Future<int> _calculateEarnedStars() async {
+    if (_currentDifficultyTier != null) return 0; // Stars only for level puzzles
+
+    final bool isFirstTime = (await _levelStorageService.getLevelStars(_currentLevelNumber)) == 0;
+
+    int stars = 1; // Base 1 star for completing (accuracy >= 95%)
+
+    // Star 2 condition: Fast solve (<= 60s) with <= 1 restart, OR first-time play with <= 1 restart
+    if (_elapsedSeconds <= 60 && _restartCount <= 1) {
+      stars = 2;
+    } else if (isFirstTime && _restartCount <= 1) {
+      stars = 2;
+    }
+
+    // Star 3 condition: Master speed (<= 35s) with 0 restarts, OR first-time play in <= 45s with 0 restarts
+    if (_elapsedSeconds <= 35 && _restartCount == 0) {
+      stars = 3;
+    } else if (isFirstTime && _elapsedSeconds <= 45 && _restartCount == 0) {
+      stars = 3;
+    }
+
+    return stars.clamp(1, 3);
+  }
+
   /// Evaluates completion only when the user finishes dragging/pouring.
-  void checkCompletionOnPourEnd() {
+  void checkCompletionOnPourEnd() async {
     if (_accuracy >= 95.0 && !_isCompleted) {
       _isCompleted = true;
       stopTimer();
       flameGame?.triggerVictoryCelebration(_mixedColor);
 
-      // Save unlocked level progress securely
-      _levelStorageService.unlockNextLevel(_currentLevelNumber);
-
-      Future.delayed(const Duration(milliseconds: 2500), () {
-        initNewTarget();
-      });
+      if (_currentDifficultyTier == null) {
+        _earnedStars = await _calculateEarnedStars();
+        await _levelStorageService.saveLevelStars(_currentLevelNumber, _earnedStars);
+        await _levelStorageService.unlockNextLevel(_currentLevelNumber);
+      } else {
+        _earnedStars = 0;
+      }
 
       update();
     }
   }
 
   void resetMix() {
+    _restartCount++;
     _resetPaintsInternal();
     _isCompleted = false;
     update();

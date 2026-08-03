@@ -68,6 +68,7 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
 
   int _currentPage = 0;
   int _unlockedLevel = 1;
+  Map<int, int> _levelStarsMap = {};
   final int _totalPages = (_totalLevelsCount / _itemsPerPage).ceil();
 
   @override
@@ -90,9 +91,14 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
 
   void _loadUnlockedLevel() async {
     final unlocked = await _levelStorageService.getUnlockedLevel();
+    final Map<int, int> starsMap = {};
+    for (int i = 1; i < unlocked; i++) {
+      starsMap[i] = await _levelStorageService.getLevelStars(i);
+    }
     if (mounted) {
       setState(() {
         _unlockedLevel = unlocked;
+        _levelStarsMap = starsMap;
         final targetPage = ((_unlockedLevel - 1) / _itemsPerPage).floor().clamp(0, _totalPages - 1);
         _currentPage = targetPage;
         if (_pageController.hasClients) {
@@ -127,7 +133,8 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
 
     if (levelNum < _unlockedLevel) {
       // Completed level
-      final stars = (levelNum % 3 == 0) ? 2 : 3;
+      final storedStars = _levelStarsMap[levelNum];
+      final stars = (storedStars != null && storedStars > 0) ? storedStars : ((levelNum % 3 == 0) ? 2 : 3);
       return _LevelData(
         number: levelNum,
         state: _LevelState.completed,
@@ -152,6 +159,7 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

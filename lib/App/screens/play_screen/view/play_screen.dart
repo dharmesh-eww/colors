@@ -12,7 +12,6 @@ import '../../../widgets/mixing_tile_widget.dart';
 import '../binding/play_screen_binding.dart';
 import '../controller/play_screen_controller.dart';
 
-
 class PlayScreen extends StatekitView<PlayScreenController> implements PlayScreenBinding {
   PlayScreen({super.key, super.tag});
 
@@ -141,19 +140,24 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                       onPourContinuous: (type, ml, pos) => ctrl.pourPaintType(type, ml),
                       onPourEnd: () => ctrl.checkCompletionOnPourEnd(),
                     ),
-
                   ],
                 ),
               ),
 
-              // ── Victory Overlay ──────────────────────────────────────────
+              // ── Game Puzzle Complete Dialog ──────────────────────────────
               if (ctrl.isCompleted)
-                _VictoryOverlay(
+                _GamePuzzleCompleteDialog(
                   accuracy: ctrl.accuracy,
                   mixedColor: ctrl.mixedColor,
                   formattedTime: ctrl.formattedTime,
                   difficultyTier: ctrl.currentDifficultyTier,
                   streakCount: ctrl.puzzleStreakCount,
+                  levelNumber: ctrl.currentLevelNumber,
+                  earnedStars: ctrl.earnedStars,
+                  restartCount: ctrl.restartCount,
+                  onNext: () => ctrl.initNewTarget(),
+                  onRetry: () => ctrl.retryChallenge(),
+                  onHome: () => Navigator.pop(context),
                 ),
 
               // ── Time Up Overlay ──────────────────────────────────────────
@@ -453,7 +457,6 @@ class _WoodenShelf extends StatelessWidget {
           ),
         ),
 
-
         // ── Wooden Shelf Plank ──────────────────────────────────────────────
         Container(
           height: 20,
@@ -496,166 +499,490 @@ class _ShelfGrainPainter extends CustomPainter {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Victory Overlay — styled to match warm wood theme
+// Game Puzzle Complete Dialog — Warm Wood & Gold Game-Themed Dialog
 // ──────────────────────────────────────────────────────────────────────────────
-class _VictoryOverlay extends StatelessWidget {
+class _GamePuzzleCompleteDialog extends StatefulWidget {
   final double accuracy;
   final Color mixedColor;
   final String formattedTime;
   final DifficultyTier? difficultyTier;
   final int streakCount;
+  final int levelNumber;
+  final int earnedStars;
+  final int restartCount;
+  final VoidCallback onNext;
+  final VoidCallback onRetry;
+  final VoidCallback onHome;
 
-  const _VictoryOverlay({
+  const _GamePuzzleCompleteDialog({
     required this.accuracy,
     required this.mixedColor,
     required this.formattedTime,
     this.difficultyTier,
-    this.streakCount = 1,
+    required this.streakCount,
+    required this.levelNumber,
+    required this.earnedStars,
+    required this.restartCount,
+    required this.onNext,
+    required this.onRetry,
+    required this.onHome,
   });
 
   @override
+  State<_GamePuzzleCompleteDialog> createState() => _GamePuzzleCompleteDialogState();
+}
+
+class _GamePuzzleCompleteDialogState extends State<_GamePuzzleCompleteDialog>
+    with SingleTickerProviderStateMixin {
+  int _visibleStars = 0;
+  bool _isAnimationComplete = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startStarAnimation();
+  }
+
+  void _startStarAnimation() async {
+    final int targetStars = widget.earnedStars.clamp(0, 3);
+    if (targetStars == 0) {
+      if (mounted) {
+        setState(() {
+          _isAnimationComplete = true;
+        });
+      }
+      return;
+    }
+
+    // Wait 1 second (1000ms) after dialog appears before starting star bounce sequence
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    for (int i = 1; i <= targetStars; i++) {
+      if (!mounted) return;
+      setState(() {
+        _visibleStars = i;
+      });
+      await Future.delayed(const Duration(milliseconds: 450));
+    }
+
+    if (mounted) {
+      await Future.delayed(const Duration(milliseconds: 200));
+      setState(() {
+        _isAnimationComplete = true;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bool isDifficulty = difficultyTier != null;
+    final bool isDifficulty = widget.difficultyTier != null;
+    const double starRowHalfHeight = 24.0;
 
     return Positioned.fill(
       child: Container(
-        color: const Color(0xFF3B1E08).withValues(alpha: 0.6),
+        color: const Color(0xFF2C1405).withValues(alpha: 0.78),
         child: Center(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 32),
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFF5DEB3), Color(0xFFE8C898)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: const Color(0xFFD4A055), width: 3),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.5),
-                  blurRadius: 30,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Difficulty badge tag if in difficulty mode
-                if (isDifficulty) ...[
+          child: SingleChildScrollView(
+            clipBehavior: Clip.none,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.topCenter,
+                children: [
+                  // ── Layer 1: Main Dialog Box Container ─────────────────────
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    margin: EdgeInsets.only(top: isDifficulty ? 0 : starRowHalfHeight),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      isDifficulty ? 18 : (starRowHalfHeight + 12),
+                      16,
+                      16,
+                    ),
                     decoration: BoxDecoration(
-                      color: difficultyTier!.primaryColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${difficultyTier!.displayName.toUpperCase()} PUZZLE #$streakCount SOLVED!',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF5DEB3), Color(0xFFE8C898)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: const Color(0xFFD4A055), width: 3.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFFD700).withValues(alpha: 0.45),
+                          blurRadius: 10,
+                          spreadRadius: 3,
+                        ),
+                        // BoxShadow(
+                        //   color: const Color(0xFF3B1E08).withValues(alpha: 0.6),
+                        //   blurRadius: 12,
+                        //   offset: const Offset(0, 6),
+                        // ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // ── Header Title Banner ──────────────────────────────
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            isDifficulty
+                                ? '${widget.difficultyTier!.displayName.toUpperCase()} SOLVED!'
+                                : 'LEVEL ${widget.levelNumber} COMPLETED!',
+                            style: const TextStyle(
+                              color: Color(0xFFFFD700),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                              letterSpacing: 1.3,
+                            ),
+                          ),
+                        ),
 
-                // Color swatch of matched color
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: mixedColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFD4A055), width: 3),
-                    boxShadow: [
-                      BoxShadow(
-                        color: mixedColor.withValues(alpha: 0.6),
-                        blurRadius: 18,
-                        spreadRadius: 2,
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+
+                        // ── Color Swatch & Accuracy Card ──────────────────────────
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF3B1E08).withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFD4A055).withValues(alpha: 0.4),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              // Color Swatch with Theme-Matched High-Contrast Check Icon
+                              Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color: widget.mixedColor,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: const Color(0xFFD4A055), width: 2.2),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: widget.mixedColor.withValues(alpha: 0.4),
+                                      blurRadius: 8,
+                                      spreadRadius: 1,
+                                    ),
+                                    BoxShadow(
+                                      color: const Color(0xFF3B1E08).withValues(alpha: 0.25),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.check_rounded,
+                                    color: widget.mixedColor.computeLuminance() > 0.5
+                                        ? const Color(0xFF3B1E08)
+                                        : Colors.white,
+                                    size: 22,
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 12),
+                              // Accuracy & Time stats
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${widget.accuracy.toStringAsFixed(1)}% ACCURACY',
+                                      style: const TextStyle(
+                                        color: Color(0xFF5D4037),
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.timer_outlined,
+                                          size: 13,
+                                          color: Color(0xFF8D6228),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Time: ${widget.formattedTime}',
+                                          style: const TextStyle(
+                                            color: Color(0xFF8D6228),
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // ── Main Action: NEXT PUZZLE / NEXT LEVEL Button ──────────
+                        GestureDetector(
+                          onTap: _isAnimationComplete ? widget.onNext : null,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            width: double.maxFinite,
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                            decoration: BoxDecoration(
+                              gradient: _isAnimationComplete
+                                  ? const LinearGradient(
+                                      colors: [Color(0xFF8B5E3C), Color(0xFF5D4037)],
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                    )
+                                  : LinearGradient(
+                                      colors: [
+                                        const Color(0xFF5D4037).withValues(alpha: 0.3),
+                                        const Color(0xFF3B1E08).withValues(alpha: 0.3),
+                                      ],
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                    ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: _isAnimationComplete
+                                    ? const Color(0xFFFFD700)
+                                    : const Color(0xFF8D6228).withValues(alpha: 0.3),
+                                width: 1.2,
+                              ),
+                              // boxShadow: _isAnimationComplete
+                              //     ? [
+                              //         BoxShadow(
+                              //           color: const Color(0xFF3B1E08).withValues(alpha: 0.45),
+                              //           blurRadius: 8,
+                              //           offset: const Offset(0, 3),
+                              //         ),
+                              //       ]
+                              //     : null,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (!_isAnimationComplete) ...[
+                                  const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFF5D4037),
+                                      strokeWidth: 2.0,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                ] else ...[
+                                  const Icon(
+                                    Icons.play_arrow_rounded,
+                                    color: Color(0xFFFFD700),
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                                Text(
+                                  isDifficulty ? 'NEXT PUZZLE' : 'NEXT LEVEL',
+                                  style: TextStyle(
+                                    color: _isAnimationComplete
+                                        ? const Color(0xFFFFD700)
+                                        : const Color(0xFF5D4037).withValues(alpha: 0.6),
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 14,
+                                    letterSpacing: 1.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // ── Secondary Actions: RETRY & HOME Buttons ────────────────
+                        Row(
+                          children: [
+                            // HOME button
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: widget.onHome,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF5D4037).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFF5D4037), width: 1.2),
+                                  ),
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.home_rounded, color: Color(0xFF5D4037), size: 16),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'HOME',
+                                        style: TextStyle(
+                                          color: Color(0xFF5D4037),
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 11,
+                                          letterSpacing: 0.8,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 8),
+
+                            // RETRY button
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: widget.onRetry,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF5D4037).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFF5D4037), width: 1.2),
+                                  ),
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.replay_rounded,
+                                        color: Color(0xFF5D4037),
+                                        size: 16,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'REPLAY',
+                                        style: TextStyle(
+                                          color: Color(0xFF5D4037),
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 11,
+                                          letterSpacing: 0.8,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  child: const Center(
-                    child: Icon(Icons.check_rounded, color: Colors.white, size: 34),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                const Text(
-                  'PERFECT MATCH!',
-                  style: TextStyle(
-                    color: Color(0xFF5D4037),
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.4,
-                    shadows: [
-                      Shadow(color: Color(0x44000000), offset: Offset(0, 2), blurRadius: 4),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00C853).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF00C853), width: 1.5),
-                      ),
-                      child: Text(
-                        'Accuracy: ${accuracy.toStringAsFixed(1)}%',
-                        style: const TextStyle(
-                          color: Color(0xFF1B5E20),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
+
+                  // ── Layer 2: Star View Parent Container (Overlapping Top Border) ──
+                  if (!isDifficulty)
+                    Positioned(
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF3B1E08), Color(0xFF2C1405)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: const Color(0xFF8D6228), width: 1.8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF1E0D03).withValues(alpha: 0.7),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(3, (index) {
+                            final int starNumber = index + 1;
+                            final bool isFilled = starNumber <= _visibleStars;
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // Base: White Outer Border & Unfilled Dark Grey Star
+                                  const Icon(Icons.star_rounded, size: 40, color: Colors.white),
+                                  Icon(
+                                    Icons.star_rounded,
+                                    size: 32,
+                                    color: const Color(0xFF8D6228).withValues(alpha: 0.4),
+                                  ),
+
+                                  // Foreground: Highlighted Golden Star (Animates 0 -> 1 Bounce)
+                                  AnimatedScale(
+                                    scale: isFilled ? 1.0 : 0.0,
+                                    duration: const Duration(milliseconds: 450),
+                                    curve: Curves.bounceOut,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFFFFD700).withValues(alpha: 0.85),
+                                            blurRadius: 20,
+                                            spreadRadius: 1,
+                                          ),
+                                          // BoxShadow(
+                                          //   color: const Color(0xFFFF8F00).withValues(alpha: 0.5),
+                                          //   blurRadius: 20,
+                                          //   spreadRadius: 1,
+                                          // ),
+                                        ],
+                                      ),
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: const [
+                                          Icon(Icons.star_rounded, size: 40, color: Colors.white),
+                                          Icon(
+                                            Icons.star_rounded,
+                                            size: 32,
+                                            color: Color(0xFFFFD700),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF5D4037).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF5D4037), width: 1.5),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.timer_outlined, size: 16, color: Color(0xFF5D4037)),
-                          const SizedBox(width: 4),
-                          Text(
-                            formattedTime,
-                            style: const TextStyle(
-                              color: Color(0xFF5D4037),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                const SizedBox(
-                  width: 26,
-                  height: 26,
-                  child: CircularProgressIndicator(color: Color(0xFFD4A055), strokeWidth: 3),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  isDifficulty ? 'Generating Next ${difficultyTier!.displayName} Puzzle...' : 'Generating Next Target...',
-                  style: const TextStyle(color: Color(0xFF8D6228), fontSize: 12),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
