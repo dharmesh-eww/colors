@@ -109,6 +109,7 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                       difficultyTier: ctrl.currentDifficultyTier,
                       puzzleStreakCount: ctrl.puzzleStreakCount,
                       formattedTime: ctrl.formattedTime,
+                      availableCoins: ctrl.availableCoins,
                       onBack: () => Navigator.pop(context),
                       onReset: () => ctrl.resetMix(),
                     ),
@@ -154,6 +155,8 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                   streakCount: ctrl.puzzleStreakCount,
                   levelNumber: ctrl.currentLevelNumber,
                   earnedStars: ctrl.earnedStars,
+                  earnedCoins: ctrl.earnedCoins,
+                  availableCoins: ctrl.availableCoins,
                   restartCount: ctrl.restartCount,
                   onNext: () => ctrl.initNewTarget(),
                   onRetry: () => ctrl.retryChallenge(),
@@ -184,6 +187,7 @@ class _TargetColorHeader extends StatelessWidget {
   final DifficultyTier? difficultyTier;
   final int puzzleStreakCount;
   final String formattedTime;
+  final int availableCoins;
   final VoidCallback onBack;
   final VoidCallback onReset;
 
@@ -194,6 +198,7 @@ class _TargetColorHeader extends StatelessWidget {
     this.difficultyTier,
     required this.puzzleStreakCount,
     required this.formattedTime,
+    required this.availableCoins,
     required this.onBack,
     required this.onReset,
   });
@@ -334,6 +339,43 @@ class _TargetColorHeader extends StatelessWidget {
                         Shadow(color: Color(0x55000000), offset: Offset(0, 1), blurRadius: 3),
                       ],
                     ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Available Coins Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+            margin: const EdgeInsets.only(right: 4),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFFD700), width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF3B1E08).withValues(alpha: 0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.monetization_on_rounded, color: Color(0xFFFFD700), size: 14),
+                const SizedBox(width: 3),
+                Text(
+                  '$availableCoins',
+                  style: const TextStyle(
+                    color: Color(0xFFFFD700),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
                   ),
                 ),
               ],
@@ -509,6 +551,8 @@ class _GamePuzzleCompleteDialog extends StatefulWidget {
   final int streakCount;
   final int levelNumber;
   final int earnedStars;
+  final int earnedCoins;
+  final int availableCoins;
   final int restartCount;
   final VoidCallback onNext;
   final VoidCallback onRetry;
@@ -522,6 +566,8 @@ class _GamePuzzleCompleteDialog extends StatefulWidget {
     required this.streakCount,
     required this.levelNumber,
     required this.earnedStars,
+    required this.earnedCoins,
+    required this.availableCoins,
     required this.restartCount,
     required this.onNext,
     required this.onRetry,
@@ -735,6 +781,46 @@ class _GamePuzzleCompleteDialogState extends State<_GamePuzzleCompleteDialog>
                                           ),
                                         ),
                                       ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Earned Coins Badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFFFFD700).withValues(alpha: 0.35),
+                                      blurRadius: 6,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.monetization_on_rounded,
+                                      color: Color(0xFFFFD700),
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '+${widget.earnedCoins}',
+                                      style: const TextStyle(
+                                        color: Color(0xFFFFD700),
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ],
                                 ),

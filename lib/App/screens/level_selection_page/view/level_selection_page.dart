@@ -365,6 +365,49 @@ class _Header extends StatelessWidget {
             ),
           ),
 
+          // Persistent Coin Badge
+          FutureBuilder<int>(
+            future: LevelStorageService().getCoins(),
+            builder: (context, snapshot) {
+              final coins = snapshot.data ?? 0;
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFFD700), width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.monetization_on_rounded, color: Color(0xFFFFD700), size: 14),
+                    const SizedBox(width: 3),
+                    Text(
+                      '$coins',
+                      style: const TextStyle(
+                        color: Color(0xFFFFD700),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+
           // Completion badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

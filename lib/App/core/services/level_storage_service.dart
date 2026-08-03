@@ -5,12 +5,44 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class LevelStorageService {
   static const String _unlockedLevelKey = 'current_unlocked_level';
   static const String _levelStarsPrefix = 'level_stars_';
+  static const String _userCoinsKey = 'user_total_coins';
   final FlutterSecureStorage _storage;
 
   LevelStorageService({FlutterSecureStorage? storage})
     : _storage = storage ?? const FlutterSecureStorage();
 
+  /// Retrieves the user's total available coins (default: 0).
+  Future<int> getCoins() async {
+    try {
+      final String? value = await _storage.read(key: _userCoinsKey);
+      if (value != null) {
+        final int? parsed = int.tryParse(value);
+        if (parsed != null && parsed >= 0) {
+          return parsed;
+        }
+      }
+    } catch (_) {}
+    return 0;
+  }
+
+  /// Saves the total available coins.
+  Future<void> saveCoins(int totalCoins) async {
+    try {
+      await _storage.write(key: _userCoinsKey, value: max(0, totalCoins).toString());
+    } catch (_) {}
+  }
+
+  /// Adds [amount] coins to the user's balance and returns the new total.
+  Future<int> addCoins(int amount) async {
+    if (amount <= 0) return await getCoins();
+    final currentCoins = await getCoins();
+    final newTotal = currentCoins + amount;
+    await saveCoins(newTotal);
+    return newTotal;
+  }
+
   /// Retrieves the highest unlocked level (default: 1).
+
   Future<int> getUnlockedLevel() async {
     try {
       final String? value = await _storage.read(key: _unlockedLevelKey);

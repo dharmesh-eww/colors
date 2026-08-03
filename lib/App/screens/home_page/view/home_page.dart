@@ -2,6 +2,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
 import '../../../core/puzzle/puzzle_model.dart';
+import '../../../core/services/level_storage_service.dart';
 import '../../../game/paint_background_game.dart';
 import '../binding/home_page_binding.dart';
 import '../controller/home_page_controller.dart';
@@ -51,6 +52,55 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
       children: [
         // ── Layer 1: Warm Wood Background ──────────────────────────────
         Positioned.fill(child: GameWidget(game: _bgGame)),
+
+        // ── Available Coins Badge Top Right ────────────────────────────
+        Positioned(
+          top: 14,
+          right: 16,
+          child: SafeArea(
+            child: FutureBuilder<int>(
+              future: LevelStorageService().getCoins(),
+              builder: (context, snapshot) {
+                final coins = snapshot.data ?? 0;
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF3B1E08).withValues(alpha: 0.5),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.monetization_on_rounded, color: Color(0xFFFFD700), size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$coins',
+                        style: const TextStyle(
+                          color: Color(0xFFFFD700),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+
         Positioned.fill(
           child: SafeArea(
             child: Column(

@@ -30,6 +30,8 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
 
   int _restartCount = 0;
   int _earnedStars = 0;
+  int _earnedCoins = 0;
+  int _availableCoins = 0;
 
   final Map<PaintType, PaintBottle> _bottles = {};
 
@@ -46,10 +48,16 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   void onInit() {
     super.onInit();
     _loadInteractionMode();
+    _loadAvailableCoins();
   }
 
   Future<void> _loadInteractionMode() async {
     _bottleInteractionMode = await _repository.loadBottleInteractionMode();
+    update();
+  }
+
+  Future<void> _loadAvailableCoins() async {
+    _availableCoins = await _levelStorageService.getCoins();
     update();
   }
 
@@ -71,10 +79,13 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   BottleInteractionMode get bottleInteractionMode => _bottleInteractionMode;
   int get restartCount => _restartCount;
   int get earnedStars => _earnedStars;
+  int get earnedCoins => _earnedCoins;
+  int get availableCoins => _availableCoins;
   List<PaintBottle> get bottles => _bottles.values.toList();
   PaintBottle? get selectedBottle => _bottles[_selectedType];
 
   int get elapsedSeconds => _elapsedSeconds;
+
 
   String get formattedTime {
     final int totalSecs = isCountdownMode ? _remainingSeconds : _elapsedSeconds;
@@ -256,6 +267,32 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
     return stars.clamp(1, 3);
   }
 
+  int _calculateEarnedCoins(int stars) {
+    if (_currentDifficultyTier == null) {
+      // Level complete: 1-2 coins based on performance & star
+      return (stars >= 3) ? 2 : 1;
+    } else {
+      // Difficulty play:
+      switch (_currentDifficultyTier!) {
+        case DifficultyTier.easy:
+        case DifficultyTier.medium:
+          return 1; // Easy, Medium complete -> 1 coin
+        case DifficultyTier.hard:
+          return 2; // Hard complete -> 2 coins
+        case DifficultyTier.expert:
+        case DifficultyTier.challenge:
+          // Expert & Challenge complete based on performance (1-3 coins):
+          if (_accuracy >= 98.0 && _elapsedSeconds <= 45 && _restartCount == 0) {
+            return 3;
+          } else if (_accuracy >= 95.0 && _elapsedSeconds <= 70 && _restartCount <= 1) {
+            return 2;
+          } else {
+            return 1;
+          }
+      }
+    }
+  }
+
   /// Evaluates completion only when the user finishes dragging/pouring.
   void checkCompletionOnPourEnd() async {
     if (_accuracy >= 95.0 && !_isCompleted) {
@@ -270,6 +307,9 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
       } else {
         _earnedStars = 0;
       }
+
+      _earnedCoins = _calculateEarnedCoins(_earnedStars);
+      _availableCoins = await _levelStorageService.addCoins(_earnedCoins);
 
       update();
     }
