@@ -137,9 +137,28 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                       mixingTileArea: _mixingTileArea,
                       flameGame: _flameGame,
                       bottleInteractionMode: ctrl.bottleInteractionMode,
+                      isHintActive: ctrl.isHintActive,
+                      targetRecipe: ctrl.targetRecipe,
                       onTap: (type) => ctrl.selectColorType(type),
                       onPourContinuous: (type, ml, pos) => ctrl.pourPaintType(type, ml),
                       onPourEnd: () => ctrl.checkCompletionOnPourEnd(),
+                      onUseHint: () async {
+                        final bool success = await ctrl.useHint();
+                        if (!success && context.mounted) {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Need 5 coins for a hint! You have ${ctrl.availableCoins} coins.',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              backgroundColor: const Color(0xFF5D4037),
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -236,93 +255,96 @@ class _TargetColorHeader extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (isDifficultyMode) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: difficultyTier!.primaryColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          difficultyTier!.displayName.toUpperCase(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 10,
-                            letterSpacing: 1.0,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (isDifficultyMode) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: difficultyTier!.primaryColor,
+                            borderRadius: BorderRadius.circular(6),
                           ),
+                          child: Text(
+                            difficultyTier!.displayName.toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 9.5,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'PUZZLE #$puzzleStreakCount',
+                          style: const TextStyle(
+                            color: Color(0xFF5D4037),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11,
+                            letterSpacing: 1.0,
+                            shadows: [
+                              Shadow(color: Color(0x33000000), offset: Offset(0, 1), blurRadius: 2),
+                            ],
+                          ),
+                        ),
+                      ] else ...[
+                        Text(
+                          'LEVEL $levelNumber',
+                          style: const TextStyle(
+                            color: Color(0xFF5D4037),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11.5,
+                            letterSpacing: 1.2,
+                            shadows: [
+                              Shadow(color: Color(0x33000000), offset: Offset(0, 1), blurRadius: 2),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 3.5,
+                        height: 3.5,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF8D6228),
+                          shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 6),
+                      const Icon(Icons.timer_outlined, size: 13, color: Color(0xFF5D4037)),
+                      const SizedBox(width: 2),
                       Text(
-                        'PUZZLE #$puzzleStreakCount',
+                        formattedTime,
                         style: const TextStyle(
                           color: Color(0xFF5D4037),
                           fontWeight: FontWeight.w900,
                           fontSize: 12,
-                          letterSpacing: 1.2,
-                          shadows: [
-                            Shadow(color: Color(0x33000000), offset: Offset(0, 1), blurRadius: 2),
-                          ],
-                        ),
-                      ),
-                    ] else ...[
-                      Text(
-                        'LEVEL $levelNumber',
-                        style: const TextStyle(
-                          color: Color(0xFF5D4037),
-                          fontWeight: FontWeight.w900,
-                          fontSize: 12,
-                          letterSpacing: 1.4,
+                          fontFamily: 'monospace',
+                          letterSpacing: 0.8,
                           shadows: [
                             Shadow(color: Color(0x33000000), offset: Offset(0, 1), blurRadius: 2),
                           ],
                         ),
                       ),
                     ],
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 4,
-                      height: 4,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF8D6228),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF5D4037)),
-                    const SizedBox(width: 3),
-                    Text(
-                      formattedTime,
-                      style: const TextStyle(
-                        color: Color(0xFF5D4037),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13,
-                        fontFamily: 'monospace',
-                        letterSpacing: 1.0,
-                        shadows: [
-                          Shadow(color: Color(0x33000000), offset: Offset(0, 1), blurRadius: 2),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 5),
-                // Teal rounded pill with hex code
+                const SizedBox(height: 4),
+                // Target hex code badge
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 350),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
                   decoration: BoxDecoration(
                     color: targetColor,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                        color: targetColor.withValues(alpha: 0.5),
-                        blurRadius: 10,
+                        color: targetColor.withValues(alpha: 0.4),
+                        blurRadius: 8,
                         spreadRadius: 1,
                       ),
                     ],
@@ -332,8 +354,8 @@ class _TargetColorHeader extends StatelessWidget {
                     style: TextStyle(
                       color: _contrastColor(targetColor),
                       fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      letterSpacing: 1.5,
+                      fontSize: 15,
+                      letterSpacing: 1.4,
                       fontFamily: 'monospace',
                       shadows: const [
                         Shadow(color: Color(0x55000000), offset: Offset(0, 1), blurRadius: 3),
@@ -451,9 +473,12 @@ class _WoodenShelf extends StatelessWidget {
   final Rect mixingTileArea;
   final PaintMixingGame flameGame;
   final BottleInteractionMode bottleInteractionMode;
+  final bool isHintActive;
+  final Map<PaintType, double> targetRecipe;
   final Function(PaintType) onTap;
   final Function(PaintType, double, Offset) onPourContinuous;
   final VoidCallback onPourEnd;
+  final VoidCallback onUseHint;
 
   const _WoodenShelf({
     required this.bottles,
@@ -461,9 +486,12 @@ class _WoodenShelf extends StatelessWidget {
     required this.mixingTileArea,
     required this.flameGame,
     this.bottleInteractionMode = BottleInteractionMode.drag,
+    this.isHintActive = false,
+    this.targetRecipe = const {},
     required this.onTap,
     required this.onPourContinuous,
     required this.onPourEnd,
+    required this.onUseHint,
   });
 
   @override
@@ -471,9 +499,97 @@ class _WoodenShelf extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // ── Shelf Header Bar (Hint Button) ──────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              GestureDetector(
+                onTap: onUseHint,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    gradient: isHintActive
+                        ? const LinearGradient(
+                            colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          )
+                        : const LinearGradient(
+                            colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isHintActive ? const Color(0xFFFFD700) : const Color(0xFFFFD700),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isHintActive ? const Color(0xFF2E7D32) : const Color(0xFF3B1E08))
+                            .withValues(alpha: 0.4),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.lightbulb_rounded,
+                        color: isHintActive ? Colors.white : const Color(0xFFFFD700),
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        isHintActive ? 'HINT ACTIVE' : 'HINT',
+                        style: TextStyle(
+                          color: isHintActive ? Colors.white : const Color(0xFFFFD700),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 11,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      if (!isHintActive) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFD700).withValues(alpha: 0.25),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.monetization_on_rounded, color: Color(0xFFFFD700), size: 11),
+                              SizedBox(width: 2),
+                              Text(
+                                '5',
+                                style: TextStyle(
+                                  color: Color(0xFFFFD700),
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
         // ── Bottle Row ──────────────────────────────────────────────────────
         SizedBox(
-          height: 138,
+          height: isHintActive ? 162 : 138,
           width: double.maxFinite,
           child: Center(
             child: ListView.builder(
@@ -490,6 +606,8 @@ class _WoodenShelf extends StatelessWidget {
                   mixingTileArea: mixingTileArea,
                   flameGame: flameGame,
                   bottleInteractionMode: bottleInteractionMode,
+                  isHintActive: isHintActive,
+                  targetAmountMl: targetRecipe[bottle.type] ?? 0.0,
                   onTap: () => onTap(bottle.type),
                   onPourContinuous: onPourContinuous,
                   onPourEnd: onPourEnd,

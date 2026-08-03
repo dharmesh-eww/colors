@@ -32,6 +32,7 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   int _earnedStars = 0;
   int _earnedCoins = 0;
   int _availableCoins = 0;
+  bool _isHintActive = false;
 
   final Map<PaintType, PaintBottle> _bottles = {};
 
@@ -61,6 +62,16 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
     update();
   }
 
+  Future<bool> useHint() async {
+    if (_isHintActive) return true;
+    if (_availableCoins < 5) return false;
+
+    _availableCoins = await _levelStorageService.addCoins(-5);
+    _isHintActive = true;
+    update();
+    return true;
+  }
+
   // Getters
   int get currentLevelNumber => _currentLevelNumber;
   DifficultyTier? get currentDifficultyTier => _currentDifficultyTier;
@@ -81,6 +92,8 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
   int get earnedStars => _earnedStars;
   int get earnedCoins => _earnedCoins;
   int get availableCoins => _availableCoins;
+  bool get isHintActive => _isHintActive;
+  Map<PaintType, double> get targetRecipe => _currentPuzzle?.targetRecipe ?? {};
   List<PaintBottle> get bottles => _bottles.values.toList();
   PaintBottle? get selectedBottle => _bottles[_selectedType];
 
@@ -151,6 +164,7 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
 
     _restartCount = 0;
     _earnedStars = 0;
+    _isHintActive = false;
     _resetPaintsInternal();
     _isCompleted = false;
     _isTimeUp = false;
@@ -184,6 +198,7 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
 
     _restartCount = 0;
     _earnedStars = 0;
+    _isHintActive = false;
     _resetPaintsInternal();
     _isCompleted = false;
     startTimer();

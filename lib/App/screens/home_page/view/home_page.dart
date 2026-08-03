@@ -53,54 +53,6 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
         // ── Layer 1: Warm Wood Background ──────────────────────────────
         Positioned.fill(child: GameWidget(game: _bgGame)),
 
-        // ── Available Coins Badge Top Right ────────────────────────────
-        Positioned(
-          top: 14,
-          right: 16,
-          child: SafeArea(
-            child: FutureBuilder<int>(
-              future: LevelStorageService().getCoins(),
-              builder: (context, snapshot) {
-                final coins = snapshot.data ?? 0;
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF3B1E08).withValues(alpha: 0.5),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.monetization_on_rounded, color: Color(0xFFFFD700), size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$coins',
-                        style: const TextStyle(
-                          color: Color(0xFFFFD700),
-                          fontWeight: FontWeight.w900,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-
         Positioned.fill(
           child: SafeArea(
             child: Column(
@@ -177,33 +129,88 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
             ),
           ),
         ),
+
+        // ── Top Header Action Bar (Coins Badge on Left, Settings on Right) ──────
         Positioned(
           top: 14,
+          left: 16,
           right: 16,
           child: SafeArea(
-            child: GestureDetector(
-              onTap: () => widget.controller.settingsButtonClicked(context),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFF5DEB3), Color(0xFFE8C898)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Available Coins Badge (Coin Icon + Total Coins)
+                FutureBuilder<int>(
+                  future: LevelStorageService().getCoins(),
+                  builder: (context, snapshot) {
+                    final coins = snapshot.data ?? 0;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF3B1E08).withValues(alpha: 0.5),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.monetization_on_rounded,
+                            color: Color(0xFFFFD700),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            '$coins',
+                            style: const TextStyle(
+                              color: Color(0xFFFFD700),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-                child: const Icon(Icons.settings_rounded, color: Color(0xFF5D4037), size: 24),
-              ),
+
+                // Settings Button
+                GestureDetector(
+                  onTap: () => widget.controller.settingsButtonClicked(context),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF5DEB3), Color(0xFFE8C898)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.settings_rounded, color: Color(0xFF5D4037), size: 24),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

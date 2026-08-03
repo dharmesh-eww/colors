@@ -15,6 +15,8 @@ class DraggableBottleWidget extends StatefulWidget {
   final PaintMixingGame? flameGame;
   final Rect mixingTileArea;
   final BottleInteractionMode bottleInteractionMode;
+  final bool isHintActive;
+  final double targetAmountMl;
 
   const DraggableBottleWidget({
     super.key,
@@ -26,6 +28,8 @@ class DraggableBottleWidget extends StatefulWidget {
     this.flameGame,
     required this.mixingTileArea,
     this.bottleInteractionMode = BottleInteractionMode.drag,
+    this.isHintActive = false,
+    this.targetAmountMl = 0.0,
   });
 
   @override
@@ -344,6 +348,66 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
                 onDraggableCanceled: (velocity, offset) => _resetDrag(),
                 child: _buildInkBottle(isDragging: false, isTilted: false),
               ),
+
+              // ── Hint Target Amount Badge (Shown when hint system is activated) ──
+              if (widget.isHintActive) ...[
+                const SizedBox(height: 3),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    gradient: widget.targetAmountMl > 0
+                        ? const LinearGradient(
+                            colors: [Color(0xFFFFD700), Color(0xFFD4A055)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          )
+                        : null,
+                    color: widget.targetAmountMl <= 0
+                        ? const Color(0xFF3B1E08).withValues(alpha: 0.35)
+                        : null,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: widget.targetAmountMl > 0
+                          ? Colors.white
+                          : const Color(0xFF8D6228).withValues(alpha: 0.4),
+                      width: 1.2,
+                    ),
+                    boxShadow: widget.targetAmountMl > 0
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFFFFD700).withValues(alpha: 0.6),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.lightbulb_rounded,
+                        color: widget.targetAmountMl > 0
+                            ? const Color(0xFF3B1E08)
+                            : const Color(0xFFBCAAA4),
+                        size: 10,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        '${widget.targetAmountMl.toStringAsFixed(0)} ml',
+                        style: TextStyle(
+                          color: widget.targetAmountMl > 0
+                              ? const Color(0xFF3B1E08)
+                              : const Color(0xFFBCAAA4),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 9.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 5),
 
