@@ -58,7 +58,7 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 14),
+                const SizedBox(height: 72),
 
                 // ── Title ─────────────────────────────────────────────────
                 const Text(
@@ -132,85 +132,130 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
 
         // ── Top Header Action Bar (Coins Badge on Left, Settings on Right) ──────
         Positioned(
-          top: 14,
-          left: 16,
-          right: 16,
+          top: 0,
+          left: 0,
+          right: 0,
           child: SafeArea(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Available Coins Badge (Coin Icon + Total Coins)
-                FutureBuilder<int>(
-                  future: LevelStorageService().getCoins(),
-                  builder: (context, snapshot) {
-                    final coins = snapshot.data ?? 0;
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // ── Available Coins Badge ─────────────────────────────────
+                  FutureBuilder<int>(
+                    future: LevelStorageService().getCoins(),
+                    builder: (context, snapshot) {
+                      final coins = snapshot.data ?? 0;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF7A4A1E), // warm oak top
+                              Color(0xFF4A2510), // deep wood bottom
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFFD700).withValues(alpha: 0.35),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                            BoxShadow(
+                              color: const Color(0xFF1E0B02).withValues(alpha: 0.55),
+                              blurRadius: 6,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Coin icon with glow
+                            Container(
+                              width: 26,
+                              height: 26,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFFFF5DF), Color(0xFFFFD700), Color(0xFFD4A055)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: const Color(0xFFB87333), width: 1.2),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFFFD700).withValues(alpha: 0.6),
+                                    blurRadius: 6,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.monetization_on_rounded,
+                                color: Color(0xFF7A4A1E),
+                                size: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '$coins',
+                              style: const TextStyle(
+                                color: Color(0xFFFFD700),
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                letterSpacing: 0.5,
+                                shadows: [
+                                  Shadow(
+                                    color: Color(0xFF1E0B02),
+                                    offset: Offset(0, 1.5),
+                                    blurRadius: 3,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
+                  // ── Settings Button ───────────────────────────────────────
+                  GestureDetector(
+                    onTap: () => widget.controller.settingsButtonClicked(context),
+                    child: Container(
+                      width: 46,
+                      height: 46,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
+                          colors: [Color(0xFFF5DEB3), Color(0xFFE0BE88)],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                         ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF3B1E08).withValues(alpha: 0.5),
+                            color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                          BoxShadow(
+                            color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
                             blurRadius: 6,
                             offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.monetization_on_rounded,
-                            color: Color(0xFFFFD700),
-                            size: 18,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            '$coins',
-                            style: const TextStyle(
-                              color: Color(0xFFFFD700),
-                              fontWeight: FontWeight.w900,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-
-                // Settings Button
-                GestureDetector(
-                  onTap: () => widget.controller.settingsButtonClicked(context),
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFF5DEB3), Color(0xFFE8C898)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+                      child: const Icon(Icons.settings_rounded, color: Color(0xFF5D4037), size: 24),
                     ),
-                    child: const Icon(Icons.settings_rounded, color: Color(0xFF5D4037), size: 24),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

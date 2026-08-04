@@ -111,7 +111,29 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                       formattedTime: ctrl.formattedTime,
                       availableCoins: ctrl.availableCoins,
                       onBack: () => Navigator.pop(context),
+                    ),
+
+                    // ── Action Buttons Row (Hint + Reset) outside header ────────
+                    _ActionButtonsRow(
+                      isHintActive: ctrl.isHintActive,
                       onReset: () => ctrl.resetMix(),
+                      onUseHint: () async {
+                        final bool success = await ctrl.useHint();
+                        if (!success && context.mounted) {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Need 5 coins for a hint! You have ${ctrl.availableCoins} coins.',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              backgroundColor: const Color(0xFF5D4037),
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
                     ),
 
                     // ── Central Mixing Station ────────────────────────────────
@@ -142,23 +164,6 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                       onTap: (type) => ctrl.selectColorType(type),
                       onPourContinuous: (type, ml, pos) => ctrl.pourPaintType(type, ml),
                       onPourEnd: () => ctrl.checkCompletionOnPourEnd(),
-                      onUseHint: () async {
-                        final bool success = await ctrl.useHint();
-                        if (!success && context.mounted) {
-                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Need 5 coins for a hint! You have ${ctrl.availableCoins} coins.',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              backgroundColor: const Color(0xFF5D4037),
-                              behavior: SnackBarBehavior.floating,
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
                     ),
                   ],
                 ),
@@ -208,7 +213,6 @@ class _TargetColorHeader extends StatelessWidget {
   final String formattedTime;
   final int availableCoins;
   final VoidCallback onBack;
-  final VoidCallback onReset;
 
   const _TargetColorHeader({
     required this.targetColor,
@@ -219,7 +223,6 @@ class _TargetColorHeader extends StatelessWidget {
     required this.formattedTime,
     required this.availableCoins,
     required this.onBack,
-    required this.onReset,
   });
 
   @override
@@ -246,9 +249,11 @@ class _TargetColorHeader extends StatelessWidget {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Back button with press animation
+          // Back button
           _AnimatedIconButton(icon: Icons.chevron_left_rounded, iconSize: 24, onTap: onBack),
+          const SizedBox(width: 4),
 
           // Target Color label + timer + hex badge (centered)
           Expanded(
@@ -367,45 +372,75 @@ class _TargetColorHeader extends StatelessWidget {
             ),
           ),
 
-          // Available Coins Badge
+          // ── Coins badge (right side of header) ───────────────────────
+          const SizedBox(width: 6),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-            margin: const EdgeInsets.only(right: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
+                colors: [Color(0xFF7A4A1E), Color(0xFF4A2510)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFFFD700), width: 1.2),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFFFD700), width: 1.8),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF3B1E08).withValues(alpha: 0.3),
+                  color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+                  blurRadius: 6,
+                  spreadRadius: 1,
+                ),
+                BoxShadow(
+                  color: const Color(0xFF1E0B02).withValues(alpha: 0.45),
                   blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.monetization_on_rounded, color: Color(0xFFFFD700), size: 14),
-                const SizedBox(width: 3),
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFF5DF), Color(0xFFFFD700), Color(0xFFD4A055)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFB87333), width: 1.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFFD700).withValues(alpha: 0.5),
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.monetization_on_rounded,
+                    color: Color(0xFF7A4A1E),
+                    size: 12,
+                  ),
+                ),
+                const SizedBox(width: 5),
                 Text(
                   '$availableCoins',
                   style: const TextStyle(
                     color: Color(0xFFFFD700),
                     fontWeight: FontWeight.w900,
-                    fontSize: 11,
+                    fontSize: 13,
+                    letterSpacing: 0.3,
+                    shadows: [
+                      Shadow(color: Color(0xFF1E0B02), offset: Offset(0, 1), blurRadius: 2),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-
-          // Reset button with press animation
-          _AnimatedIconButton(icon: Icons.refresh_rounded, iconSize: 20, onTap: onReset),
         ],
       ),
     );
@@ -414,6 +449,225 @@ class _TargetColorHeader extends StatelessWidget {
   Color _contrastColor(Color bg) {
     final double luminance = bg.computeLuminance();
     return luminance > 0.4 ? const Color(0xFF3B1E08) : Colors.white;
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Floating Action Buttons Row — Hint & Reset, below the header
+// ──────────────────────────────────────────────────────────────────────────────
+class _ActionButtonsRow extends StatelessWidget {
+  final bool isHintActive;
+  final VoidCallback onReset;
+  final VoidCallback onUseHint;
+
+  const _ActionButtonsRow({
+    required this.isHintActive,
+    required this.onReset,
+    required this.onUseHint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          // ── Hint button ─────────────────────────────────────────
+          GestureDetector(
+            onTap: onUseHint,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                gradient: isHintActive
+                    ? const LinearGradient(
+                        colors: [Color(0xFF388E3C), Color(0xFF1B5E20)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      )
+                    : const LinearGradient(
+                        colors: [Color(0xFF7A4A1E), Color(0xFF4A2510)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: isHintActive ? const Color(0xFF81C784) : const Color(0xFFFFD700),
+                  width: 1.8,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isHintActive ? const Color(0xFF2E7D32) : const Color(0xFFFFD700))
+                        .withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFF1E0B02).withValues(alpha: 0.45),
+                    blurRadius: 4,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      gradient: isHintActive
+                          ? const LinearGradient(
+                              colors: [Color(0xFFA5D6A7), Color(0xFF66BB6A)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : const LinearGradient(
+                              colors: [Color(0xFFFFF5DF), Color(0xFFFFD700), Color(0xFFD4A055)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isHintActive ? const Color(0xFF2E7D32) : const Color(0xFFB87333),
+                        width: 1.0,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isHintActive ? const Color(0xFF66BB6A) : const Color(0xFFFFD700))
+                              .withValues(alpha: 0.5),
+                          blurRadius: 5,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.lightbulb_rounded,
+                      color: isHintActive ? Colors.white : const Color(0xFF7A4A1E),
+                      size: 13,
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  Text(
+                    isHintActive ? 'HINT ACTIVE' : 'HINT',
+                    style: TextStyle(
+                      color: isHintActive ? Colors.white : const Color(0xFFFFD700),
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                      letterSpacing: 0.8,
+                      shadows: [
+                        Shadow(
+                          color: isHintActive ? const Color(0xFF1B5E20) : const Color(0xFF1E0B02),
+                          offset: const Offset(0, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!isHintActive) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: const Color(0xFFFFD700).withValues(alpha: 0.7),
+                          width: 1.0,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFFD700).withValues(alpha: 0.2),
+                            blurRadius: 3,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.monetization_on_rounded, color: Color(0xFFFFD700), size: 12),
+                          SizedBox(width: 3),
+                          Text(
+                            '5',
+                            style: TextStyle(
+                              color: Color(0xFFFFD700),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 11,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0xFF1E0B02),
+                                  offset: Offset(0, 1),
+                                  blurRadius: 2,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          // ── Reset button ──────────────────────────────────────
+          GestureDetector(
+            onTap: onReset,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF5DEB3), Color(0xFFE0BE88)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFFD4A055), width: 1.8),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF3B1E08).withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.refresh_rounded, color: Color(0xFF5D4037), size: 18),
+                  SizedBox(width: 6),
+                  Text(
+                    'RESET',
+                    style: TextStyle(
+                      color: Color(0xFF5D4037),
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                      letterSpacing: 0.8,
+                      shadows: [
+                        Shadow(
+                          color: Color(0x33000000),
+                          offset: Offset(0, 1),
+                          blurRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -466,7 +720,7 @@ class _AnimatedIconButtonState extends State<_AnimatedIconButton> {
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Wooden Shelf + Ink Bottles
-// ──────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 class _WoodenShelf extends StatelessWidget {
   final List<PaintBottle> bottles;
   final PaintType selectedType;
@@ -478,7 +732,6 @@ class _WoodenShelf extends StatelessWidget {
   final Function(PaintType) onTap;
   final Function(PaintType, double, Offset) onPourContinuous;
   final VoidCallback onPourEnd;
-  final VoidCallback onUseHint;
 
   const _WoodenShelf({
     required this.bottles,
@@ -491,7 +744,6 @@ class _WoodenShelf extends StatelessWidget {
     required this.onTap,
     required this.onPourContinuous,
     required this.onPourEnd,
-    required this.onUseHint,
   });
 
   @override
@@ -499,94 +751,6 @@ class _WoodenShelf extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Shelf Header Bar (Hint Button) ──────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              GestureDetector(
-                onTap: onUseHint,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    gradient: isHintActive
-                        ? const LinearGradient(
-                            colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          )
-                        : const LinearGradient(
-                            colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isHintActive ? const Color(0xFFFFD700) : const Color(0xFFFFD700),
-                      width: 1.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (isHintActive ? const Color(0xFF2E7D32) : const Color(0xFF3B1E08))
-                            .withValues(alpha: 0.4),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.lightbulb_rounded,
-                        color: isHintActive ? Colors.white : const Color(0xFFFFD700),
-                        size: 14,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        isHintActive ? 'HINT ACTIVE' : 'HINT',
-                        style: TextStyle(
-                          color: isHintActive ? Colors.white : const Color(0xFFFFD700),
-                          fontWeight: FontWeight.w900,
-                          fontSize: 11,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      if (!isHintActive) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFD700).withValues(alpha: 0.25),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.monetization_on_rounded, color: Color(0xFFFFD700), size: 11),
-                              SizedBox(width: 2),
-                              Text(
-                                '5',
-                                style: TextStyle(
-                                  color: Color(0xFFFFD700),
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
         // ── Bottle Row ──────────────────────────────────────────────────────
         SizedBox(
           height: isHintActive ? 162 : 138,
