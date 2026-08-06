@@ -69,13 +69,17 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
   }
 
   void _calculateTileArea() {
+    if (!mounted) return;
     final RenderBox? renderBox = _mixingTileKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox != null) {
+    if (renderBox != null && renderBox.hasSize && renderBox.attached) {
       final position = renderBox.localToGlobal(Offset.zero);
       final size = renderBox.size;
-      setState(() {
-        _mixingTileArea = Rect.fromLTWH(position.dx, position.dy, size.width, size.height);
-      });
+      final newArea = Rect.fromLTWH(position.dx, position.dy, size.width, size.height);
+      if (_mixingTileArea != newArea) {
+        setState(() {
+          _mixingTileArea = newArea;
+        });
+      }
     }
   }
 
@@ -109,14 +113,12 @@ class _PlayScreenBodyState extends State<_PlayScreenBody> {
                       difficultyTier: ctrl.currentDifficultyTier,
                       puzzleStreakCount: ctrl.puzzleStreakCount,
                       formattedTime: ctrl.formattedTime,
-                      availableCoins: ctrl.availableCoins,
                       onBack: () => Navigator.pop(context),
+                      onReset: () => ctrl.resetMix(),
                     ),
 
-                    // ── Action Buttons Row (Hint + Reset) outside header ────────
+                    // ── Action Buttons Row (Hint) outside header ────────
                     _ActionButtonsRow(
-                      isHintActive: ctrl.isHintActive,
-                      onReset: () => ctrl.resetMix(),
                       onUseHint: () async {
                         final bool success = await ctrl.useHint();
                         if (!success && context.mounted) {
@@ -211,8 +213,8 @@ class _TargetColorHeader extends StatelessWidget {
   final DifficultyTier? difficultyTier;
   final int puzzleStreakCount;
   final String formattedTime;
-  final int availableCoins;
   final VoidCallback onBack;
+  final VoidCallback onReset;
 
   const _TargetColorHeader({
     required this.targetColor,
@@ -221,8 +223,8 @@ class _TargetColorHeader extends StatelessWidget {
     this.difficultyTier,
     required this.puzzleStreakCount,
     required this.formattedTime,
-    required this.availableCoins,
     required this.onBack,
+    required this.onReset,
   });
 
   @override
@@ -267,10 +269,25 @@ class _TargetColorHeader extends StatelessWidget {
                     children: [
                       if (isDifficultyMode) ...[
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                           decoration: BoxDecoration(
-                            color: difficultyTier!.primaryColor,
-                            borderRadius: BorderRadius.circular(6),
+                            gradient: LinearGradient(
+                              colors: [difficultyTier!.primaryColor, difficultyTier!.gradientEnd],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: const Color(0xFFFFD700).withValues(alpha: 0.65),
+                              width: 1.0,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: difficultyTier!.primaryColor.withValues(alpha: 0.35),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1.5),
+                              ),
+                            ],
                           ),
                           child: Text(
                             difficultyTier!.displayName.toUpperCase(),
@@ -279,6 +296,13 @@ class _TargetColorHeader extends StatelessWidget {
                               fontWeight: FontWeight.w900,
                               fontSize: 9.5,
                               letterSpacing: 0.8,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0x66000000),
+                                  offset: Offset(0, 1),
+                                  blurRadius: 2,
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -372,75 +396,9 @@ class _TargetColorHeader extends StatelessWidget {
             ),
           ),
 
-          // ── Coins badge (right side of header) ───────────────────────
-          const SizedBox(width: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF7A4A1E), Color(0xFF4A2510)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFFFD700), width: 1.8),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.3),
-                  blurRadius: 6,
-                  spreadRadius: 1,
-                ),
-                BoxShadow(
-                  color: const Color(0xFF1E0B02).withValues(alpha: 0.45),
-                  blurRadius: 4,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFFF5DF), Color(0xFFFFD700), Color(0xFFD4A055)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFB87333), width: 1.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFFD700).withValues(alpha: 0.5),
-                        blurRadius: 4,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.monetization_on_rounded,
-                    color: Color(0xFF7A4A1E),
-                    size: 12,
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  '$availableCoins',
-                  style: const TextStyle(
-                    color: Color(0xFFFFD700),
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                    letterSpacing: 0.3,
-                    shadows: [
-                      Shadow(color: Color(0xFF1E0B02), offset: Offset(0, 1), blurRadius: 2),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // ── Reset button (right side of header) ───────────────────
+          const SizedBox(width: 4),
+          _AnimatedIconButton(icon: Icons.refresh_rounded, iconSize: 22, onTap: onReset),
         ],
       ),
     );
@@ -453,53 +411,39 @@ class _TargetColorHeader extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Floating Action Buttons Row — Hint & Reset, below the header
+// Floating Action Buttons Row — Hint, below the header
 // ──────────────────────────────────────────────────────────────────────────────
 class _ActionButtonsRow extends StatelessWidget {
-  final bool isHintActive;
-  final VoidCallback onReset;
   final VoidCallback onUseHint;
 
-  const _ActionButtonsRow({
-    required this.isHintActive,
-    required this.onReset,
-    required this.onUseHint,
-  });
+  const _ActionButtonsRow({required this.onUseHint});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.only(right: 16, top: 4, bottom: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // ── Hint button ─────────────────────────────────────────
+          // ── Circular Hint button ─────────────────────────────────
           GestureDetector(
             onTap: onUseHint,
+            behavior: HitTestBehavior.opaque,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
-                gradient: isHintActive
-                    ? const LinearGradient(
-                        colors: [Color(0xFF388E3C), Color(0xFF1B5E20)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      )
-                    : const LinearGradient(
-                        colors: [Color(0xFF7A4A1E), Color(0xFF4A2510)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: isHintActive ? const Color(0xFF81C784) : const Color(0xFFFFD700),
-                  width: 1.8,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF7A4A1E), Color(0xFF4A2510)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
                 boxShadow: [
                   BoxShadow(
-                    color: (isHintActive ? const Color(0xFF2E7D32) : const Color(0xFFFFD700))
-                        .withValues(alpha: 0.35),
+                    color: const Color(0xFFFFD700).withValues(alpha: 0.35),
                     blurRadius: 8,
                     spreadRadius: 1,
                   ),
@@ -510,158 +454,8 @@ class _ActionButtonsRow extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      gradient: isHintActive
-                          ? const LinearGradient(
-                              colors: [Color(0xFFA5D6A7), Color(0xFF66BB6A)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : const LinearGradient(
-                              colors: [Color(0xFFFFF5DF), Color(0xFFFFD700), Color(0xFFD4A055)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isHintActive ? const Color(0xFF2E7D32) : const Color(0xFFB87333),
-                        width: 1.0,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (isHintActive ? const Color(0xFF66BB6A) : const Color(0xFFFFD700))
-                              .withValues(alpha: 0.5),
-                          blurRadius: 5,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.lightbulb_rounded,
-                      color: isHintActive ? Colors.white : const Color(0xFF7A4A1E),
-                      size: 13,
-                    ),
-                  ),
-                  const SizedBox(width: 7),
-                  Text(
-                    isHintActive ? 'HINT ACTIVE' : 'HINT',
-                    style: TextStyle(
-                      color: isHintActive ? Colors.white : const Color(0xFFFFD700),
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                      letterSpacing: 0.8,
-                      shadows: [
-                        Shadow(
-                          color: isHintActive ? const Color(0xFF1B5E20) : const Color(0xFF1E0B02),
-                          offset: const Offset(0, 1),
-                          blurRadius: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (!isHintActive) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: const Color(0xFFFFD700).withValues(alpha: 0.7),
-                          width: 1.0,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFFFD700).withValues(alpha: 0.2),
-                            blurRadius: 3,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.monetization_on_rounded, color: Color(0xFFFFD700), size: 12),
-                          SizedBox(width: 3),
-                          Text(
-                            '5',
-                            style: TextStyle(
-                              color: Color(0xFFFFD700),
-                              fontWeight: FontWeight.w900,
-                              fontSize: 11,
-                              shadows: [
-                                Shadow(
-                                  color: Color(0xFF1E0B02),
-                                  offset: Offset(0, 1),
-                                  blurRadius: 2,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 10),
-
-          // ── Reset button ──────────────────────────────────────
-          GestureDetector(
-            onTap: onReset,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFF5DEB3), Color(0xFFE0BE88)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFD4A055), width: 1.8),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF3B1E08).withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.refresh_rounded, color: Color(0xFF5D4037), size: 18),
-                  SizedBox(width: 6),
-                  Text(
-                    'RESET',
-                    style: TextStyle(
-                      color: Color(0xFF5D4037),
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                      letterSpacing: 0.8,
-                      shadows: [
-                        Shadow(
-                          color: Color(0x33000000),
-                          offset: Offset(0, 1),
-                          blurRadius: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              child: const Center(
+                child: Icon(Icons.lightbulb_rounded, color: Color(0xFFFFD700), size: 24),
               ),
             ),
           ),
@@ -753,7 +547,7 @@ class _WoodenShelf extends StatelessWidget {
       children: [
         // ── Bottle Row ──────────────────────────────────────────────────────
         SizedBox(
-          height: isHintActive ? 162 : 138,
+          height: 162,
           width: double.maxFinite,
           child: Center(
             child: ListView.builder(

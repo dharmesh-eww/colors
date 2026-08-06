@@ -120,11 +120,11 @@ class _GlowingPlatform extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(50),
         gradient: RadialGradient(
-          colors: [color.withValues(alpha: 0.9), color.withValues(alpha: 0.35), Colors.transparent],
+          colors: [color.withValues(alpha: 0.5), color.withValues(alpha: 0.15), Colors.transparent],
           stops: const [0.0, 0.5, 1.0],
         ),
         boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.7), blurRadius: 22, spreadRadius: 4),
+          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 12, spreadRadius: 1),
         ],
       ),
       child: Center(
@@ -133,7 +133,7 @@ class _GlowingPlatform extends StatelessWidget {
           width: 120,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(50),
-            color: color.withValues(alpha: 0.6),
+            color: color.withValues(alpha: 0.35),
           ),
         ),
       ),

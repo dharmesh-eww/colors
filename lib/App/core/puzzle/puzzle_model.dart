@@ -37,7 +37,7 @@ extension DifficultyTierX on DifficultyTier {
   Color get primaryColor {
     switch (this) {
       case DifficultyTier.easy:
-        return const Color(0xFF00B4D8); // Cyan / Turquoise
+        return const Color(0xFF388E3C); // Alchemist Emerald Green
       case DifficultyTier.medium:
         return const Color(0xFFFFB703); // Warm Amber Gold
       case DifficultyTier.hard:
@@ -52,7 +52,7 @@ extension DifficultyTierX on DifficultyTier {
   Color get gradientEnd {
     switch (this) {
       case DifficultyTier.easy:
-        return const Color(0xFF0077B6);
+        return const Color(0xFF1B5E20); // Dark Emerald Green
       case DifficultyTier.medium:
         return const Color(0xFFFB8500);
       case DifficultyTier.hard:

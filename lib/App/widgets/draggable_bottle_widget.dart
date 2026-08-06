@@ -36,7 +36,6 @@ class DraggableBottleWidget extends StatefulWidget {
   State<DraggableBottleWidget> createState() => _DraggableBottleWidgetState();
 }
 
-
 class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
   bool _isOverTile = false;
   Timer? _pourTimer;
@@ -133,10 +132,7 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
       widget.flameGame!.startLiquidPour(
         bottleNozzlePos: Vector2(bottlePos.dx, bottlePos.dy),
         color: widget.bottle.color,
-        targetTilePos: Vector2(
-          widget.mixingTileArea.center.dx,
-          widget.mixingTileArea.center.dy,
-        ),
+        targetTilePos: Vector2(widget.mixingTileArea.center.dx, widget.mixingTileArea.center.dy),
       );
       Timer(const Duration(milliseconds: 300), () {
         widget.flameGame?.stopLiquidPour();
@@ -160,10 +156,7 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
       widget.flameGame!.startLiquidPour(
         bottleNozzlePos: Vector2(bottlePos.dx, bottlePos.dy),
         color: widget.bottle.color,
-        targetTilePos: Vector2(
-          widget.mixingTileArea.center.dx,
-          widget.mixingTileArea.center.dy,
-        ),
+        targetTilePos: Vector2(widget.mixingTileArea.center.dx, widget.mixingTileArea.center.dy),
       );
     }
 
@@ -180,10 +173,7 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
       if (widget.flameGame != null) {
         widget.flameGame!.updateLiquidPour(
           bottleNozzlePos: Vector2(currentPos.dx, currentPos.dy),
-          targetTilePos: Vector2(
-            widget.mixingTileArea.center.dx,
-            widget.mixingTileArea.center.dy,
-          ),
+          targetTilePos: Vector2(widget.mixingTileArea.center.dx, widget.mixingTileArea.center.dy),
         );
       }
     });
@@ -202,7 +192,6 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
     }
     widget.onPourEnd?.call();
   }
-
 
   @override
   void dispose() {
@@ -293,9 +282,8 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
         }
       },
       behavior: HitTestBehavior.opaque,
-      child: Transform.translate(
-
-        offset: Offset(0, widget.isSelected ? -6 : 0),
+      child: Transform.scale(
+        scale: widget.isSelected ? 1.1 : 1.0,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Column(
@@ -306,7 +294,9 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
               // ── Draggable Ink Bottle ──────────────────────────────────────
               Draggable<PaintType>(
                 data: bottle.type,
-                maxSimultaneousDrags: widget.bottleInteractionMode == BottleInteractionMode.drag ? 1 : 0,
+                maxSimultaneousDrags: widget.bottleInteractionMode == BottleInteractionMode.drag
+                    ? 1
+                    : 0,
                 feedback: Material(
                   color: Colors.transparent,
                   child: _buildInkBottle(isDragging: true, isTilted: _isOverTile),
