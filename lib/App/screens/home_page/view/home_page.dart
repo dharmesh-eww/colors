@@ -146,68 +146,40 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
                     future: LevelStorageService().getCoins(),
                     builder: (context, snapshot) {
                       final coins = snapshot.data ?? 0;
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFF7A4A1E), // warm oak top
-                              Color(0xFF4A2510), // deep wood bottom
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(color: const Color(0xFFFFD700), width: 2.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFFFD700).withValues(alpha: 0.35),
-                              blurRadius: 8,
-                              spreadRadius: 1,
-                            ),
-                            BoxShadow(
-                              color: const Color(0xFF1E0B02).withValues(alpha: 0.55),
-                              blurRadius: 6,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Coin icon with glow
-                            Container(
-                              width: 26,
-                              height: 26,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFFFFF5DF), Color(0xFFFFD700), Color(0xFFD4A055)],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
+                      return Stack(
+                        alignment: Alignment.centerLeft,
+                        children: [
+                          // ── 1. Total Coins Text Background (Attached to right of coin icon) ──
+                          Container(
+                            margin: const EdgeInsets.only(left: 18),
+                            padding: const EdgeInsets.fromLTRB(25, 5, 15, 5),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                              borderRadius: const BorderRadius.only(
+                                topRight: Radius.circular(16),
+                                bottomRight: Radius.circular(16),
+                                topLeft: Radius.zero,
+                                bottomLeft: Radius.zero,
+                              ),
+                              border: Border.all(color: const Color(0xFFFFD700), width: 1.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF1E0B02).withValues(alpha: 0.5),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 3),
                                 ),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFFB87333), width: 1.2),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFFFFD700).withValues(alpha: 0.6),
-                                    blurRadius: 6,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.monetization_on_rounded,
-                                color: Color(0xFF7A4A1E),
-                                size: 16,
-                              ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Text(
+                            child: Text(
                               '$coins',
                               style: const TextStyle(
                                 color: Color(0xFFFFD700),
                                 fontWeight: FontWeight.w900,
-                                fontSize: 16,
+                                fontSize: 15,
                                 letterSpacing: 0.5,
                                 shadows: [
                                   Shadow(
@@ -218,8 +190,40 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
                                 ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+
+                          // ── 2. Larger Coin Icon Circle Badge (Overlapping left side) ──
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFFF5DF), Color(0xFFFFD700), Color(0xFFD4A055)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFFFFF8E1), width: 1.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFFFD700).withValues(alpha: 0.65),
+                                  blurRadius: 8,
+                                  spreadRadius: 1,
+                                ),
+                                BoxShadow(
+                                  color: const Color(0xFF1E0B02).withValues(alpha: 0.5),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.monetization_on_rounded,
+                              color: Color(0xFF5D4037),
+                              size: 24,
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),
