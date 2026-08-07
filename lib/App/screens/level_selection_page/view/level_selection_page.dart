@@ -5,6 +5,8 @@ import 'package:statekit/statekit.dart';
 import '../../../core/puzzle/puzzle_generator.dart';
 import '../../../core/services/level_storage_service.dart';
 import '../../../game/paint_background_game.dart';
+import '../../../routes/app_routes.dart';
+import '../../home_screen/controller/home_screen_controller.dart';
 import '../binding/level_selection_page.dart';
 import '../controller/level_selection_page.dart';
 
@@ -134,7 +136,9 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
     if (levelNum < _unlockedLevel) {
       // Completed level
       final storedStars = _levelStarsMap[levelNum];
-      final stars = (storedStars != null && storedStars > 0) ? storedStars : ((levelNum % 3 == 0) ? 2 : 3);
+      final stars = (storedStars != null && storedStars > 0)
+          ? storedStars
+          : ((levelNum % 3 == 0) ? 2 : 3);
       return _LevelData(
         number: levelNum,
         state: _LevelState.completed,
@@ -159,7 +163,6 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -312,9 +315,20 @@ class _Header extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Back button
+          // Back button -> Navigates/switches to Home Page
           GestureDetector(
-            // onTap: () => Navigator.pop(context),
+            onTap: () {
+              try {
+                Statekit.find<HomeScreenController>().changeTab(0);
+              } catch (_) {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                } else {
+                  Navigator.pushReplacementNamed(context, Routes.homeScreen);
+                }
+              }
+            },
+            behavior: HitTestBehavior.opaque,
             child: Container(
               width: 36,
               height: 36,
@@ -363,49 +377,6 @@ class _Header extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-
-          // Persistent Coin Badge
-          FutureBuilder<int>(
-            future: LevelStorageService().getCoins(),
-            builder: (context, snapshot) {
-              final coins = snapshot.data ?? 0;
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                margin: const EdgeInsets.only(right: 8),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF5D4037), Color(0xFF3B1E08)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFFD700), width: 1.2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.monetization_on_rounded, color: Color(0xFFFFD700), size: 14),
-                    const SizedBox(width: 3),
-                    Text(
-                      '$coins',
-                      style: const TextStyle(
-                        color: Color(0xFFFFD700),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
           ),
 
           // Completion badge
