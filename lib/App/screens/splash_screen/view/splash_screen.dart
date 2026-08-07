@@ -1,5 +1,6 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import '../../../core/services/level_storage_service.dart';
 import '../../../game/paint_background_game.dart';
 import '../../../routes/app_routes.dart';
 
@@ -53,10 +54,16 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       end: 1.0,
     ).animate(CurvedAnimation(parent: _progressController, curve: Curves.easeInOutCubic));
 
-    // Navigation timer
-    Future.delayed(const Duration(milliseconds: 2400), () {
+    // Navigation timer — checks first time launch
+    Future.delayed(const Duration(milliseconds: 2400), () async {
+      if (!mounted) return;
+      final bool tutorialDone = await LevelStorageService().isTutorialCompleted();
       if (mounted) {
-        Navigator.pushReplacementNamed(context, Routes.homeScreen);
+        if (!tutorialDone) {
+          Navigator.pushReplacementNamed(context, Routes.tutorialScreen);
+        } else {
+          Navigator.pushReplacementNamed(context, Routes.homeScreen);
+        }
       }
     });
   }

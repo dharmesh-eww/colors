@@ -6,10 +6,27 @@ class LevelStorageService {
   static const String _unlockedLevelKey = 'current_unlocked_level';
   static const String _levelStarsPrefix = 'level_stars_';
   static const String _userCoinsKey = 'user_total_coins';
+  static const String _tutorialCompletedKey = 'tutorial_completed_flag';
   final FlutterSecureStorage _storage;
 
   LevelStorageService({FlutterSecureStorage? storage})
     : _storage = storage ?? const FlutterSecureStorage();
+
+  /// Checks if the tutorial has been completed (returns false for first-time app launch).
+  Future<bool> isTutorialCompleted() async {
+    try {
+      final String? value = await _storage.read(key: _tutorialCompletedKey);
+      return value == 'true';
+    } catch (_) {}
+    return false;
+  }
+
+  /// Marks tutorial as completed.
+  Future<void> setTutorialCompleted() async {
+    try {
+      await _storage.write(key: _tutorialCompletedKey, value: 'true');
+    } catch (_) {}
+  }
 
   /// Retrieves the user's total available coins (default: 0).
   Future<int> getCoins() async {
