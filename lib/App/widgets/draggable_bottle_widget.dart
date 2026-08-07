@@ -57,14 +57,34 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
     }
   }
 
+  final GlobalKey _bottleKey = GlobalKey();
+
+  Offset _getNozzleGlobalPosition(Offset dragGlobalPos, bool isTilted) {
+    if (!isTilted) {
+      return Offset(dragGlobalPos.dx, dragGlobalPos.dy);
+    }
+    // When bottle feedback is rotated by -pi * 0.52 (~-93.6 deg):
+    // Bottle dimensions: 52 x 75. Center: (26, 37.5).
+    // Spout nozzle top: (26, 4) -> relative to center: (0, -33.5).
+    const double angle = -pi * 0.52;
+    const double relX = 0.0;
+    const double relY = -33.5;
+
+    final double rotX = relX * cos(angle) - relY * sin(angle);
+    final double rotY = relX * sin(angle) + relY * cos(angle);
+
+    return Offset(dragGlobalPos.dx + rotX, dragGlobalPos.dy + rotY);
+  }
+
   void _startPouring() {
     _pourTimer?.cancel();
     _rotationDelayTimer?.cancel();
 
     _rotationDelayTimer = Timer(const Duration(milliseconds: 80), () {
       if (widget.flameGame != null && _currentDragGlobalPos != Offset.zero) {
+        final nozzlePos = _getNozzleGlobalPosition(_currentDragGlobalPos, true);
         widget.flameGame!.startLiquidPour(
-          bottleNozzlePos: Vector2(_currentDragGlobalPos.dx, _currentDragGlobalPos.dy),
+          bottleNozzlePos: Vector2(nozzlePos.dx, nozzlePos.dy),
           color: widget.bottle.color,
           targetTilePos: Vector2(widget.mixingTileArea.center.dx, widget.mixingTileArea.center.dy),
         );
@@ -80,8 +100,9 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
         _availableMlNotifier.value = widget.bottle.availableMl;
 
         if (widget.flameGame != null && _currentDragGlobalPos != Offset.zero) {
+          final nozzlePos = _getNozzleGlobalPosition(_currentDragGlobalPos, true);
           widget.flameGame!.updateLiquidPour(
-            bottleNozzlePos: Vector2(_currentDragGlobalPos.dx, _currentDragGlobalPos.dy),
+            bottleNozzlePos: Vector2(nozzlePos.dx, nozzlePos.dy),
             targetTilePos: Vector2(
               widget.mixingTileArea.center.dx,
               widget.mixingTileArea.center.dy,
@@ -112,11 +133,18 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
   }
 
   Offset _getBottleGlobalPosition() {
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox != null) {
+    final RenderBox? renderBox = _bottleKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null && renderBox.hasSize && renderBox.attached) {
       final pos = renderBox.localToGlobal(Offset.zero);
       final size = renderBox.size;
-      return Offset(pos.dx + size.width / 2, pos.dy + 15);
+      // Top center of the upright bottle neck / spout
+      return Offset(pos.dx + size.width / 2, pos.dy + 4.0);
+    }
+    final RenderBox? fallbackBox = context.findRenderObject() as RenderBox?;
+    if (fallbackBox != null && fallbackBox.hasSize && fallbackBox.attached) {
+      final pos = fallbackBox.localToGlobal(Offset.zero);
+      final size = fallbackBox.size;
+      return Offset(pos.dx + size.width / 2, pos.dy + 15.0);
     }
     return widget.mixingTileArea.center;
   }
@@ -203,7 +231,11 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
   }
 
   /// Build the corked ink bottle graphic using CustomPaint
-  Widget _buildInkBottle({required bool isDragging, required bool isTilted}) {
+  Widget _buildInkBottle({
+    required bool isDragging,
+    required bool isTilted,
+    bool isUncorked = false,
+  }) {
     return ValueListenableBuilder<double>(
       valueListenable: _availableMlNotifier,
       builder: (context, availableMl, child) {
@@ -235,6 +267,7 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
                   )
                 : null,
             child: SizedBox(
+              key: isDragging ? null : _bottleKey,
               width: 52,
               height: 75,
               child: CustomPaint(
@@ -243,7 +276,7 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
                   fillRatio: fillRatio,
                   isWhite: bottle.type == PaintType.white,
                   isBlack: bottle.type == PaintType.black,
-                  isUncorked: isTilted,
+                  isUncorked: isTilted || isUncorked,
                 ),
               ),
             ),
@@ -325,8 +358,9 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
                       _stopPouring();
                     }
                   } else if (isCurrentlyOverTile && widget.flameGame != null) {
+                    final nozzlePos = _getNozzleGlobalPosition(_currentDragGlobalPos, true);
                     widget.flameGame!.updateLiquidPour(
-                      bottleNozzlePos: Vector2(_currentDragGlobalPos.dx, _currentDragGlobalPos.dy),
+                      bottleNozzlePos: Vector2(nozzlePos.dx, nozzlePos.dy),
                       targetTilePos: Vector2(
                         widget.mixingTileArea.center.dx,
                         widget.mixingTileArea.center.dy,
@@ -336,7 +370,7 @@ class _DraggableBottleWidgetState extends State<DraggableBottleWidget> {
                 },
                 onDragEnd: (details) => _resetDrag(),
                 onDraggableCanceled: (velocity, offset) => _resetDrag(),
-                child: _buildInkBottle(isDragging: false, isTilted: false),
+                child: _buildInkBottle(isDragging: false, isTilted: false, isUncorked: _isOverTile),
               ),
 
               // ── Hint Target Amount Badge (Shown when hint system is activated) ──
