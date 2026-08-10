@@ -1,6 +1,7 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import '../../../core/services/level_storage_service.dart';
+import '../../../core/utils/asset_images.dart';
 import '../../../game/paint_background_game.dart';
 import '../../../routes/app_routes.dart';
 
@@ -62,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         if (!tutorialDone) {
           Navigator.pushReplacementNamed(context, Routes.tutorialScreen);
         } else {
-          Navigator.pushReplacementNamed(context, Routes.homeScreen);
+          // Navigator.pushReplacementNamed(context, Routes.homeScreen);
         }
       }
     });
@@ -190,12 +191,13 @@ class _SplashLogoBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double logoSize = MediaQuery.sizeOf(context).width / 2;
     return AnimatedBuilder(
       animation: shimmerAnimation,
       builder: (context, child) {
         return Container(
-          width: 116,
-          height: 116,
+          width: logoSize,
+          height: logoSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: const LinearGradient(
@@ -218,11 +220,25 @@ class _SplashLogoBadge extends StatelessWidget {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              const Icon(Icons.palette_rounded, size: 56, color: Color(0xFFF5DEB3)),
+              ClipOval(
+                child: Image.asset(
+                  AssetImages.logo,
+                  width: logoSize,
+                  height: logoSize,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(
+                      Icons.palette_rounded,
+                      size: logoSize * 0.5,
+                      color: const Color(0xFFF5DEB3),
+                    );
+                  },
+                ),
+              ),
               // Floating color droplets around badge rim
               Positioned(
-                top: 18,
-                right: 16,
+                top: logoSize * 0.15,
+                right: logoSize * 0.14,
                 child: Container(
                   width: 11,
                   height: 11,
@@ -230,8 +246,8 @@ class _SplashLogoBadge extends StatelessWidget {
                 ),
               ),
               Positioned(
-                bottom: 18,
-                left: 16,
+                bottom: logoSize * 0.15,
+                left: logoSize * 0.14,
                 child: Container(
                   width: 10,
                   height: 10,
@@ -239,8 +255,8 @@ class _SplashLogoBadge extends StatelessWidget {
                 ),
               ),
               Positioned(
-                bottom: 24,
-                right: 18,
+                bottom: logoSize * 0.20,
+                right: logoSize * 0.15,
                 child: Container(
                   width: 8,
                   height: 8,
