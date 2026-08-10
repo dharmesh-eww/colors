@@ -17,6 +17,7 @@ class ProfilePageController extends StateController<ProfilePageBinding> {
 
   final int _levelsCompleted = 42;
   final int _starsEarned = 118;
+  final int _totalPuzzlesPlayed = 65;
 
   bool get isSignedIn => _isSignedIn;
   bool get isLoading => _isLoading;
@@ -26,6 +27,8 @@ class ProfilePageController extends StateController<ProfilePageBinding> {
   String get currentAvatarEmoji => avatarEmojis[_avatarIndex % avatarEmojis.length];
   int get levelsCompleted => _levelsCompleted;
   int get starsEarned => _starsEarned;
+  int get totalPuzzlesPlayed => _totalPuzzlesPlayed;
+  int get totalGamesPlayed => _totalPuzzlesPlayed;
 
   void updateProfile({required String name, required Country country, int? avatarIndex}) {
     _userName = name;

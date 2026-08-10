@@ -73,8 +73,18 @@ class _ProfilePageBodyState extends State<_ProfilePageBody> {
 
                             const SizedBox(height: 16),
 
-                            // ── Card 2: Game Stats & Achievements (Levels + Stars) ───────────
-                            _PlayerStatsCard(ctrl: ctrl),
+                            // ── Card 2: Game Stats & Achievements (Levels + Stars + Puzzles) ──
+                            GestureDetector(
+                              onTap: () => Navigator.pushNamed(context, Routes.statisticScreen),
+                              child: _PlayerStatsCard(ctrl: ctrl),
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            // ── Button: View Detailed Statistics ──────────────
+                            _ViewDetailedStatsButton(
+                              onPressed: () => Navigator.pushNamed(context, Routes.statisticScreen),
+                            ),
 
                             const SizedBox(height: 16),
                           ],
@@ -542,7 +552,7 @@ class _Google3DButtonState extends State<_Google3DButton> {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Player Statistics Row (Identical wood theme styling for both cards)
+// Player Statistics Row (Identical wood theme styling for all cards)
 // ──────────────────────────────────────────────────────────────────────────────
 class _PlayerStatsCard extends StatelessWidget {
   final ProfilePageController ctrl;
@@ -568,9 +578,9 @@ class _PlayerStatsCard extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
 
-        // ── Card 2: Stars Earned (Identical style to Card 1) ─────────────────
+        // ── Card 2: Stars Earned ─────────────────────────────────────────────
         Expanded(
           child: _StatCardTile(
             gradientColors: const [Color(0xFF6E3B1C), Color(0xFF532911), Color(0xFF381806)],
@@ -581,6 +591,24 @@ class _PlayerStatsCard extends StatelessWidget {
             value: '${ctrl.starsEarned}',
             valueColor: const Color(0xFFFFF1D6),
             label: 'STARS EARNED',
+            labelColor: const Color(0xFFF5DEB3),
+            glowColor: const Color(0xFFD4A055).withValues(alpha: 0.25),
+          ),
+        ),
+
+        const SizedBox(width: 8),
+
+        // ── Card 3: Total Puzzles Played ──────────────────────────────────────
+        Expanded(
+          child: _StatCardTile(
+            gradientColors: const [Color(0xFF6E3B1C), Color(0xFF532911), Color(0xFF381806)],
+            borderColor: const Color(0xFFD4A055),
+            badgeColor: const Color(0xFFFFD700),
+            icon: Icons.extension_rounded,
+            iconColor: const Color(0xFF3B1E08),
+            value: '${ctrl.totalPuzzlesPlayed}',
+            valueColor: const Color(0xFFFFF1D6),
+            label: 'PUZZLES PLAYED',
             labelColor: const Color(0xFFF5DEB3),
             glowColor: const Color(0xFFD4A055).withValues(alpha: 0.25),
           ),
@@ -618,7 +646,7 @@ class _StatCardTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: gradientColors,
@@ -679,14 +707,86 @@ class _StatCardTile extends StatelessWidget {
           Text(
             label,
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: labelColor,
               fontWeight: FontWeight.w900,
-              fontSize: 9.0,
-              letterSpacing: 0.6,
+              fontSize: 8.5,
+              letterSpacing: 0.4,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ViewDetailedStatsButton extends StatefulWidget {
+  final VoidCallback onPressed;
+  const _ViewDetailedStatsButton({required this.onPressed});
+
+  @override
+  State<_ViewDetailedStatsButton> createState() => _ViewDetailedStatsButtonState();
+}
+
+class _ViewDetailedStatsButtonState extends State<_ViewDetailedStatsButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        widget.onPressed();
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        margin: EdgeInsets.only(top: _isPressed ? 3 : 0, bottom: _isPressed ? 0 : 3),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF5DEB3), Color(0xFFE8C898)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFD4A055), width: 1.8),
+          boxShadow: _isPressed
+              ? []
+              : [
+                  BoxShadow(
+                    color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
+                    blurRadius: 6,
+                    offset: const Offset(0, 4),
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+                    blurRadius: 3,
+                    offset: const Offset(0, -1),
+                  ),
+                ],
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.insights_rounded, color: Color(0xFF5D4037), size: 18),
+            SizedBox(width: 8),
+            Text(
+              'VIEW DETAILED STATISTICS',
+              style: TextStyle(
+                color: Color(0xFF5D4037),
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+                letterSpacing: 1.0,
+              ),
+            ),
+            SizedBox(width: 6),
+            Icon(Icons.chevron_right_rounded, color: Color(0xFFD4A055), size: 18),
+          ],
+        ),
       ),
     );
   }

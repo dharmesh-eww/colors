@@ -19,7 +19,7 @@ class _MyAppState extends State<MyApp> {
       routes: RouteNavigator.routes,
       theme: lightTheme,
       darkTheme: darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
     );
   }
 }

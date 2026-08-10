@@ -16,6 +16,8 @@ import '../screens/edit_profile_screen/view/edit_profile_screen.dart';
 import '../screens/edit_profile_screen/controller/edit_profile_screen_controller.dart';
 import '../screens/tutorial_screen/view/tutorial_screen.dart';
 import '../screens/tutorial_screen/controller/tutorial_screen_controller.dart';
+import '../screens/statistic_screen/view/statistic_screen.dart';
+import '../screens/statistic_screen/controller/statistic_screen_controller.dart';
 
 abstract class RouteNavigator {
   static final Map<String, Widget Function(BuildContext)> routes = {
@@ -38,12 +40,20 @@ abstract class RouteNavigator {
       child: SettingsScreen(),
     ),
     Routes.editProfileScreen: (BuildContext context) => StateProvider(
-      stateProvider: StatekitProvider(create: () => EditProfileScreenController()),
+      stateProvider: StatekitProvider(
+        create: () => EditProfileScreenController(),
+      ),
       child: EditProfileScreen(),
     ),
     Routes.tutorialScreen: (BuildContext context) => StateProvider(
       stateProvider: StatekitProvider(create: () => TutorialScreenController()),
       child: TutorialScreen(),
+    ),
+    Routes.statisticScreen: (BuildContext context) => StateProvider(
+      stateProvider: StatekitProvider(
+        create: () => StatisticScreenController(),
+      ),
+      child: StatisticScreen(),
     ),
   };
 }
