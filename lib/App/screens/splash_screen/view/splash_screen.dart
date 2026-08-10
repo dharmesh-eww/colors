@@ -63,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         if (!tutorialDone) {
           Navigator.pushReplacementNamed(context, Routes.tutorialScreen);
         } else {
-          // Navigator.pushReplacementNamed(context, Routes.homeScreen);
+          Navigator.pushReplacementNamed(context, Routes.homeScreen);
         }
       }
     });
