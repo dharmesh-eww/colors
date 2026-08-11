@@ -1,9 +1,6 @@
 import 'package:colors/App/routes/app_routes.dart';
-import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
-
-import '../../../game/paint_background_game.dart';
 import '../binding/profile_page_binding.dart';
 import '../controller/profile_page_controller.dart';
 
@@ -31,73 +28,54 @@ class _ProfilePageBody extends StatefulWidget {
 }
 
 class _ProfilePageBodyState extends State<_ProfilePageBody> {
-  late PaintBackgroundGame _bgGame;
-
-  @override
-  void initState() {
-    super.initState();
-    _bgGame = PaintBackgroundGame();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF8B5E3C),
-      body: StateBuilder<ProfilePageController>(
-        controller: widget.controller,
-        builder: (context, ctrl, child) {
-          return Stack(
+    return StateBuilder<ProfilePageController>(
+      controller: widget.controller,
+      builder: (context, ctrl, child) {
+        return SafeArea(
+          child: Column(
             children: [
-              // ── Layer 1: Flame Warm Wood Background ─────────────────────
-              Positioned.fill(child: GameWidget(game: _bgGame)),
+              // ── Header Panel ──────────────────────────────────────
+              const _Header(),
 
-              // ── Layer 2: Content Layout ─────────────────────────────────
-              SafeArea(
-                child: Column(
-                  children: [
-                    // ── Header Panel ──────────────────────────────────────
-                    const _Header(),
+              const SizedBox(height: 16),
 
-                    const SizedBox(height: 16),
+              // ── Scrollable Body Content ───────────────────────────
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // ── Card 1: Main Player Profile Card (Avatar + Name + Google Sign-In) ─────
+                      _ProfileHeaderCard(ctrl: ctrl),
 
-                    // ── Scrollable Body Content ───────────────────────────
-                    Expanded(
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // ── Card 1: Main Player Profile Card (Avatar + Name + Google Sign-In) ─────
-                            _ProfileHeaderCard(ctrl: ctrl),
+                      const SizedBox(height: 16),
 
-                            const SizedBox(height: 16),
-
-                            // ── Card 2: Game Stats & Achievements (Levels + Stars + Puzzles) ──
-                            GestureDetector(
-                              onTap: () => Navigator.pushNamed(context, Routes.statisticScreen),
-                              child: _PlayerStatsCard(ctrl: ctrl),
-                            ),
-
-                            const SizedBox(height: 12),
-
-                            // ── Button: View Detailed Statistics ──────────────
-                            _ViewDetailedStatsButton(
-                              onPressed: () => Navigator.pushNamed(context, Routes.statisticScreen),
-                            ),
-
-                            const SizedBox(height: 16),
-                          ],
-                        ),
+                      // ── Card 2: Game Stats & Achievements (Levels + Stars + Puzzles) ──
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, Routes.statisticScreen),
+                        child: _PlayerStatsCard(ctrl: ctrl),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 12),
+
+                      // ── Button: View Detailed Statistics ──────────────
+                      _ViewDetailedStatsButton(
+                        onPressed: () => Navigator.pushNamed(context, Routes.statisticScreen),
+                      ),
+
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

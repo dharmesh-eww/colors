@@ -1,10 +1,8 @@
 import 'dart:math';
-import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
 import '../../../core/puzzle/puzzle_generator.dart';
 import '../../../core/services/level_storage_service.dart';
-import '../../../game/paint_background_game.dart';
 import '../../../routes/app_routes.dart';
 import '../../home_screen/controller/home_screen_controller.dart';
 import '../binding/level_selection_page.dart';
@@ -63,7 +61,6 @@ class _LevelSelectionBody extends StatefulWidget {
 class _LevelSelectionBodyState extends State<_LevelSelectionBody>
     with SingleTickerProviderStateMixin {
   final LevelStorageService _levelStorageService = LevelStorageService();
-  late PaintBackgroundGame _bgGame;
   late AnimationController _glowController;
   late Animation<double> _glowAnimation;
   late PageController _pageController;
@@ -76,7 +73,6 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
   @override
   void initState() {
     super.initState();
-    _bgGame = PaintBackgroundGame();
 
     // Pulse animation for current playing level highlight & floating hero bottle
     _glowController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))
@@ -166,82 +162,64 @@ class _LevelSelectionBodyState extends State<_LevelSelectionBody>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF8B5E3C),
-      body: Stack(
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Layer 1: Warm Wood Background ──────────────────────────────
-          Positioned.fill(child: GameWidget(game: _bgGame)),
+          // ── Header Panel ──────────────────────────────────────────
+          _Header(completedCount: _completedCount, totalCount: _totalLevelsCount),
 
-          // ── Layer 2: Content Layout ────────────────────────────────────
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── Header Panel ──────────────────────────────────────────
-                _Header(completedCount: _completedCount, totalCount: _totalLevelsCount),
+          const SizedBox(height: 16),
 
-                const SizedBox(height: 16),
+          // ── 1000 Level Matrix Grid PageView ───────────────────────
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: PageView.builder(
+                controller: _pageController,
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                itemCount: _totalPages,
+                onPageChanged: (page) {
+                  setState(() {
+                    _currentPage = page;
+                  });
+                },
+                itemBuilder: (context, pageIndex) {
+                  return AnimatedBuilder(
+                    animation: Listenable.merge([_pageController, _glowAnimation]),
+                    builder: (context, child) {
+                      double pageOffset = 0.0;
+                      if (_pageController.position.haveDimensions) {
+                        pageOffset = (_pageController.page ?? _currentPage.toDouble()) - pageIndex;
+                      } else {
+                        pageOffset = (_currentPage - pageIndex).toDouble();
+                      }
 
-                // ── 1000 Level Matrix Grid PageView ───────────────────────
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: PageView.builder(
-                      controller: _pageController,
-                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                      itemCount: _totalPages,
-                      onPageChanged: (page) {
-                        setState(() {
-                          _currentPage = page;
-                        });
-                      },
-                      itemBuilder: (context, pageIndex) {
-                        return AnimatedBuilder(
-                          animation: Listenable.merge([_pageController, _glowAnimation]),
-                          builder: (context, child) {
-                            double pageOffset = 0.0;
-                            if (_pageController.position.haveDimensions) {
-                              pageOffset =
-                                  (_pageController.page ?? _currentPage.toDouble()) - pageIndex;
-                            } else {
-                              pageOffset = (_currentPage - pageIndex).toDouble();
-                            }
+                      final double scale = (1.0 - (pageOffset.abs() * 0.12)).clamp(0.88, 1.0);
+                      final double opacity = (1.0 - (pageOffset.abs() * 0.45)).clamp(0.35, 1.0);
 
-                            final double scale = (1.0 - (pageOffset.abs() * 0.12)).clamp(0.88, 1.0);
-                            final double opacity = (1.0 - (pageOffset.abs() * 0.45)).clamp(
-                              0.35,
-                              1.0,
-                            );
-
-                            return Transform.scale(
-                              scale: scale,
-                              child: Opacity(
-                                opacity: opacity,
-                                child: _buildCustomGridPage(pageIndex),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                // ── Page Navigation Controls ──────────────────────────────
-                _PageNavigationControls(
-                  currentPage: _currentPage,
-                  totalPages: _totalPages,
-                  onPrevPage: () => _goToPage(_currentPage - 1),
-                  onNextPage: () => _goToPage(_currentPage + 1),
-                ),
-
-                const SizedBox(height: 8),
-              ],
+                      return Transform.scale(
+                        scale: scale,
+                        child: Opacity(opacity: opacity, child: _buildCustomGridPage(pageIndex)),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ),
+
+          const SizedBox(height: 6),
+
+          // ── Page Navigation Controls ──────────────────────────────
+          _PageNavigationControls(
+            currentPage: _currentPage,
+            totalPages: _totalPages,
+            onPrevPage: () => _goToPage(_currentPage - 1),
+            onNextPage: () => _goToPage(_currentPage + 1),
+          ),
+
+          const SizedBox(height: 8),
         ],
       ),
     );

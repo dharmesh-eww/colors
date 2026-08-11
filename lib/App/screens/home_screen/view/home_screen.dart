@@ -6,28 +6,66 @@ import '../../profile_page/view/profile_page.dart';
 import '../binding/home_screen_binding.dart';
 import '../controller/home_screen_controller.dart';
 
+import 'package:flame/game.dart';
+import '../../../game/paint_background_game.dart';
+
 class HomeScreen extends StatekitView<HomeScreenController> implements HomeScreenBinding {
   HomeScreen({super.key, super.tag});
 
   @override
   Widget build(BuildContext context) {
+    return _HomeScreenShell(controller: controller);
+  }
+
+  @override
+  void doSomething() {}
+}
+
+class _HomeScreenShell extends StatefulWidget {
+  final HomeScreenController controller;
+  const _HomeScreenShell({required this.controller});
+
+  @override
+  State<_HomeScreenShell> createState() => _HomeScreenShellState();
+}
+
+class _HomeScreenShellState extends State<_HomeScreenShell> {
+  late PaintBackgroundGame _bgGame;
+
+  @override
+  void initState() {
+    super.initState();
+    _bgGame = PaintBackgroundGame();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return StateBuilder<HomeScreenController>(
-      controller: controller,
+      controller: widget.controller,
       builder: (context, ctrl, child) {
         return Scaffold(
           backgroundColor: const Color(0xFF8B5E3C),
-          body: _AnimatedTabBody(ctrl: ctrl),
-          bottomNavigationBar: _WoodenBottomNavigationBar(
-            currentIndex: ctrl.currentTabIndex,
-            onTap: (index) => ctrl.changeTab(index),
+          body: Stack(
+            children: [
+              // Single global background game animation
+              Positioned.fill(child: GameWidget(game: _bgGame)),
+
+              // Foreground tab content + bottom navigation
+              Column(
+                children: [
+                  Expanded(child: _AnimatedTabBody(ctrl: ctrl)),
+                  _WoodenBottomNavigationBar(
+                    currentIndex: ctrl.currentTabIndex,
+                    onTap: (index) => ctrl.changeTab(index),
+                  ),
+                ],
+              ),
+            ],
           ),
         );
       },
     );
   }
-
-  @override
-  void doSomething() {}
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -91,33 +129,53 @@ class _WoodenBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 72,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF6E3B1C), // Deep chocolate top
-            Color(0xFF532911), // Mid warm oak
-            Color(0xFF381806), // Dark wood base
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        border: const Border(top: BorderSide(color: Color(0xFFFFD700), width: 2.0)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF241004).withValues(alpha: 0.7),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
+      color: Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: SafeArea(
+        top: false,
+        child: Container(
+          height: 62,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFF5D3A1A), // Warm oak top
+                Color(0xFF42240E), // Mid chocolate
+                Color(0xFF2C1307), // Dark mahogany base
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(color: const Color(0xFFD4A055).withValues(alpha: 0.4), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1A0903).withValues(alpha: 0.65),
+                blurRadius: 14,
+                spreadRadius: 2,
+                offset: const Offset(0, 6),
+              ),
+              BoxShadow(
+                color: const Color(0xFFF5DEB3).withValues(alpha: 0.12),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(index: 0, icon: Icons.sports_esports_rounded, label: 'PLAY'),
-          _buildNavItem(index: 1, icon: Icons.grid_view_rounded, label: 'LEVELS'),
-          _buildNavItem(index: 2, icon: Icons.person_rounded, label: 'PROFILE'),
-        ],
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildNavItem(index: 0, icon: Icons.sports_esports_rounded, label: 'PLAY'),
+              ),
+              Expanded(
+                child: _buildNavItem(index: 1, icon: Icons.grid_view_rounded, label: 'LEVELS'),
+              ),
+              Expanded(
+                child: _buildNavItem(index: 2, icon: Icons.person_rounded, label: 'PROFILE'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -130,7 +188,8 @@ class _WoodenBottomNavigationBar extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
@@ -151,29 +210,34 @@ class _WoodenBottomNavigationBar extends StatelessWidget {
                 ]
               : null,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: isSelected
-                  ? const Color(0xFF3B1E08)
-                  : const Color(0xFFF5DEB3).withValues(alpha: 0.7),
+        child: Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: isSelected ? 20 : 18,
+                  color: isSelected
+                      ? const Color(0xFF3B1E08)
+                      : const Color(0xFFF5DEB3).withValues(alpha: 0.7),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected
+                        ? const Color(0xFF3B1E08)
+                        : const Color(0xFFF5DEB3).withValues(alpha: 0.7),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected
-                    ? const Color(0xFF3B1E08)
-                    : const Color(0xFFF5DEB3).withValues(alpha: 0.7),
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.0,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

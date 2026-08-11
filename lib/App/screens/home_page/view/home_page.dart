@@ -1,9 +1,7 @@
-import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:statekit/statekit.dart';
 import '../../../core/puzzle/puzzle_model.dart';
 import '../../../core/services/level_storage_service.dart';
-import '../../../game/paint_background_game.dart';
 import '../binding/home_page_binding.dart';
 import '../controller/home_page_controller.dart';
 
@@ -34,99 +32,82 @@ class _HomeScreenBody extends StatefulWidget {
 }
 
 class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderStateMixin {
-  late PaintBackgroundGame _bgGame;
-
-  @override
-  void initState() {
-    super.initState();
-    _bgGame = PaintBackgroundGame();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: const Color(0xFF8B5E3C), body: _buildHomePlayTabContent());
-  }
-
-  Widget _buildHomePlayTabContent() {
     return Stack(
       children: [
-        // ── Layer 1: Warm Wood Background ──────────────────────────────
-        Positioned.fill(child: GameWidget(game: _bgGame)),
+        // ── Main Page Content ─────────────────────────────────────────────
+        SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 72),
 
-        Positioned.fill(
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 72),
+              // ── Title ─────────────────────────────────────────────────
+              const Text(
+                'Color Craft',
+                style: TextStyle(
+                  fontSize: 38,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFFF5DEB3),
+                  letterSpacing: 2.0,
+                  shadows: [
+                    Shadow(color: Color(0xFF3B1E08), offset: Offset(0, 3), blurRadius: 8),
+                    Shadow(color: Color(0xFFFFD700), offset: Offset(0, -1), blurRadius: 6),
+                  ],
+                ),
+              ),
 
-                // ── Title ─────────────────────────────────────────────────
-                const Text(
-                  'Color Craft',
+              const SizedBox(height: 4),
+
+              // ── Subtitle badge ────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFD4A055), Color(0xFFB87333)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFFFFD700).withValues(alpha: 0.6),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Text(
+                  'Mix · Match · Paint Puzzle',
                   style: TextStyle(
-                    fontSize: 38,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFFF5DEB3),
-                    letterSpacing: 2.0,
-                    shadows: [
-                      Shadow(color: Color(0xFF3B1E08), offset: Offset(0, 3), blurRadius: 8),
-                      Shadow(color: Color(0xFFFFD700), offset: Offset(0, -1), blurRadius: 6),
-                    ],
+                    color: Color(0xFFFFF8E1),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
                   ),
                 ),
+              ),
 
-                const SizedBox(height: 4),
+              const SizedBox(height: 16),
 
-                // ── Subtitle badge ────────────────────────────────────────
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFD4A055), Color(0xFFB87333)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xFFFFD700).withValues(alpha: 0.6),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: const Text(
-                    'Mix · Match · Paint Puzzle',
-                    style: TextStyle(
-                      color: Color(0xFFFFF8E1),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                    ),
+              // ── Unity-Style Wooden Slice Difficulty Menu ─────────────
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  child: _UnityWoodenDifficultyMenu(
+                    onDifficultyTap: (tier) => widget.controller.onDifficultyClicked(context, tier),
                   ),
                 ),
+              ),
 
-                const SizedBox(height: 16),
-
-                // ── Unity-Style Wooden Slice Difficulty Menu ─────────────
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                    child: _UnityWoodenDifficultyMenu(
-                      onDifficultyTap: (tier) =>
-                          widget.controller.onDifficultyClicked(context, tier),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-              ],
-            ),
+              const SizedBox(height: 12),
+            ],
           ),
         ),
 
@@ -149,7 +130,7 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
                       return Stack(
                         alignment: Alignment.centerLeft,
                         children: [
-                          // ── 1. Total Coins Text Background (Attached to right of coin icon) ──
+                          // ── 1. Total Coins Text Background ──────────────────
                           Container(
                             margin: const EdgeInsets.only(left: 18),
                             padding: const EdgeInsets.fromLTRB(25, 5, 15, 5),
@@ -192,7 +173,7 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
                             ),
                           ),
 
-                          // ── 2. Larger Coin Icon Circle Badge (Overlapping left side) ──
+                          // ── 2. Larger Coin Icon Circle Badge ────────────────
                           Container(
                             width: 38,
                             height: 38,
