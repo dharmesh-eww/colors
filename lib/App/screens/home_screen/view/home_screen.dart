@@ -16,12 +16,7 @@ class HomeScreen extends StatekitView<HomeScreenController> implements HomeScree
       builder: (context, ctrl, child) {
         return Scaffold(
           backgroundColor: const Color(0xFF8B5E3C),
-          body: switch (ctrl.currentTabIndex) {
-            0 => HomePage(),
-            1 => LevelSelectionPage(),
-            2 => ProfilePage(),
-            _ => SizedBox(),
-          },
+          body: _AnimatedTabBody(ctrl: ctrl),
           bottomNavigationBar: _WoodenBottomNavigationBar(
             currentIndex: ctrl.currentTabIndex,
             onTap: (index) => ctrl.changeTab(index),
@@ -33,6 +28,55 @@ class HomeScreen extends StatekitView<HomeScreenController> implements HomeScree
 
   @override
   void doSomething() {}
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Smooth Animated Page View Wrapper for Tab Switching
+// ──────────────────────────────────────────────────────────────────────────────
+class _AnimatedTabBody extends StatefulWidget {
+  final HomeScreenController ctrl;
+  const _AnimatedTabBody({required this.ctrl});
+
+  @override
+  State<_AnimatedTabBody> createState() => _AnimatedTabBodyState();
+}
+
+class _AnimatedTabBodyState extends State<_AnimatedTabBody> {
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: widget.ctrl.currentTabIndex);
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnimatedTabBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_pageController.hasClients &&
+        _pageController.page?.round() != widget.ctrl.currentTabIndex) {
+      _pageController.animateToPage(
+        widget.ctrl.currentTabIndex,
+        duration: const Duration(milliseconds: 380),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PageView(
+      controller: _pageController,
+      physics: const NeverScrollableScrollPhysics(),
+      children: [HomePage(), LevelSelectionPage(), ProfilePage()],
+    );
+  }
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
