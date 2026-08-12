@@ -308,7 +308,9 @@ class _TargetColorHeader extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'PUZZLE #$puzzleStreakCount',
+                          difficultyTier == DifficultyTier.dailyPuzzle
+                              ? '#${levelNumber.toString().padLeft(6, '0')}'
+                              : 'PUZZLE #$puzzleStreakCount',
                           style: const TextStyle(
                             color: Color(0xFF5D4037),
                             fontWeight: FontWeight.w900,

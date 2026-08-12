@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/paint_model.dart';
 
-enum DifficultyTier { easy, medium, hard, expert, challenge }
+enum DifficultyTier { easy, medium, hard, expert, challenge, dailyPuzzle }
 
 extension DifficultyTierX on DifficultyTier {
   String get displayName {
@@ -16,6 +16,8 @@ extension DifficultyTierX on DifficultyTier {
         return 'Expert';
       case DifficultyTier.challenge:
         return '2-Min Challenge';
+      case DifficultyTier.dailyPuzzle:
+        return 'Daily Puzzle';
     }
   }
 
@@ -31,6 +33,8 @@ extension DifficultyTierX on DifficultyTier {
         return '5 Paints • Master Alchemist';
       case DifficultyTier.challenge:
         return '2 Minute Countdown • Race Against Time!';
+      case DifficultyTier.dailyPuzzle:
+        return 'Solve Today\'s Mystery Color Mix!';
     }
   }
 
@@ -46,6 +50,8 @@ extension DifficultyTierX on DifficultyTier {
         return const Color(0xFF9D4EDD); // Royal Purple
       case DifficultyTier.challenge:
         return const Color(0xFFFF5722); // Flame Orange
+      case DifficultyTier.dailyPuzzle:
+        return const Color(0xFFFF9800); // Warm Daily Amber/Gold
     }
   }
 
@@ -61,6 +67,8 @@ extension DifficultyTierX on DifficultyTier {
         return const Color(0xFF5A189A);
       case DifficultyTier.challenge:
         return const Color(0xFFD84315);
+      case DifficultyTier.dailyPuzzle:
+        return const Color(0xFFE65100);
     }
   }
 
@@ -75,6 +83,8 @@ extension DifficultyTierX on DifficultyTier {
       case DifficultyTier.expert:
         return 5;
       case DifficultyTier.challenge:
+        return 3;
+      case DifficultyTier.dailyPuzzle:
         return 3;
     }
   }
@@ -91,6 +101,8 @@ extension DifficultyTierX on DifficultyTier {
         return 3;
       case DifficultyTier.challenge:
         return 2;
+      case DifficultyTier.dailyPuzzle:
+        return 1;
     }
   }
 

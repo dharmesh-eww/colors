@@ -21,7 +21,7 @@ class HomePageController extends StateController<HomePageBinding> {
   }
 
   void dailyChallengeClicked(BuildContext context) {
-    Navigator.pushNamed(context, Routes.playScreen, arguments: DifficultyTier.easy);
+    Navigator.pushNamed(context, Routes.playScreen, arguments: DifficultyTier.dailyPuzzle);
   }
 
   void onDifficultyClicked(BuildContext context, DifficultyTier tier) {

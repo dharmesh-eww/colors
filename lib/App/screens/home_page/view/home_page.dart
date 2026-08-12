@@ -58,55 +58,30 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
                 ),
               ),
 
-              const SizedBox(height: 4),
-
-              // ── Subtitle badge ────────────────────────────────────────
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFD4A055), Color(0xFFB87333)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: const Color(0xFFFFD700).withValues(alpha: 0.6),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF3B1E08).withValues(alpha: 0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: const Text(
-                  'Mix · Match · Paint Puzzle',
-                  style: TextStyle(
-                    color: Color(0xFFFFF8E1),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // ── Unity-Style Wooden Slice Difficulty Menu ─────────────
+              // ── Unity-Style Wooden Slice Difficulty Menu & Daily Puzzle ─────────────
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  child: _UnityWoodenDifficultyMenu(
-                    onDifficultyTap: (tier) => widget.controller.onDifficultyClicked(context, tier),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Column(
+                    children: [
+                      // ── Daily Puzzle Card ──
+                      _DailyPuzzleCardWidget(
+                        isPlayed: false,
+                        onTap: () => widget.controller.dailyChallengeClicked(context),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // ── Difficulty Selection Menu ─────────────────────────
+                      _UnityWoodenDifficultyMenu(
+                        onDifficultyTap: (tier) =>
+                            widget.controller.onDifficultyClicked(context, tier),
+                      ),
+                    ],
                   ),
                 ),
               ),
-
-              const SizedBox(height: 12),
             ],
           ),
         ),
@@ -526,7 +501,9 @@ class _UnityWoodenDifficultyMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<DifficultyTier> tiers = DifficultyTier.values;
+    final List<DifficultyTier> tiers = DifficultyTier.values
+        .where((t) => t != DifficultyTier.dailyPuzzle)
+        .toList();
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -755,6 +732,8 @@ class _UnityWoodenSliceButtonState extends State<_UnityWoodenSliceButton> {
         return Icons.military_tech_rounded;
       case DifficultyTier.challenge:
         return Icons.timer_rounded;
+      case DifficultyTier.dailyPuzzle:
+        return Icons.calendar_today_rounded;
     }
   }
 
@@ -770,6 +749,332 @@ class _UnityWoodenSliceButtonState extends State<_UnityWoodenSliceButton> {
         return '5 Paints · Master Alchemist';
       case DifficultyTier.challenge:
         return '3 Paints · 2-Min Countdown!';
+      case DifficultyTier.dailyPuzzle:
+        return 'Daily Mystery Paint Mix!';
     }
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Unity-Style 3D Wooden Daily Puzzle Card Widget (Conditional UI: Play / Played)
+// ──────────────────────────────────────────────────────────────────────────────
+class _DailyPuzzleCardWidget extends StatefulWidget {
+  final bool isPlayed;
+  final VoidCallback? onTap;
+
+  const _DailyPuzzleCardWidget({required this.isPlayed, this.onTap});
+
+  @override
+  State<_DailyPuzzleCardWidget> createState() => _DailyPuzzleCardWidgetState();
+}
+
+class _DailyPuzzleCardWidgetState extends State<_DailyPuzzleCardWidget> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isPlayed = widget.isPlayed;
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: () {
+        if (!isPlayed) {
+          widget.onTap?.call();
+        }
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.98 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isPlayed
+                  ? const [
+                      Color(0xFF4A3425), // Settled wood top
+                      Color(0xFF382518), // Muted dark oak
+                      Color(0xFF28180E), // Deep shadow base
+                    ]
+                  : const [
+                      Color(0xFF7A4522), // Carved wood top highlight
+                      Color(0xFF582D13), // Mid oak plank
+                      Color(0xFF3C1B08), // Dark bottom bevel
+                    ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isPlayed
+                  ? const Color(0xFFB87333).withValues(alpha: 0.7)
+                  : const Color(0xFFFFD700).withValues(alpha: 0.85),
+              width: 1.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isPlayed
+                    ? const Color(0xFF1E0B02).withValues(alpha: 0.4)
+                    : const Color(0xFFFFD700).withValues(alpha: 0.25),
+                blurRadius: isPlayed ? 6 : 10,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: const Color(0xFF1E0B02).withValues(alpha: 0.6),
+                blurRadius: 6,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              // ── Corner Metallic Stud Rivets ──
+              Positioned(top: 0, left: 0, child: _buildRivet()),
+              Positioned(top: 0, right: 0, child: _buildRivet()),
+              Positioned(bottom: 0, left: 0, child: _buildRivet()),
+              Positioned(bottom: 0, right: 0, child: _buildRivet()),
+
+              // ── Decorative Top-Right Sparkles / Stamp Watermark ──
+              Positioned(
+                top: -2,
+                right: 42,
+                child: Icon(
+                  isPlayed ? Icons.workspace_premium_rounded : Icons.auto_awesome_rounded,
+                  size: 16,
+                  color: isPlayed
+                      ? const Color(0xFF81C784).withValues(alpha: 0.4)
+                      : const Color(0xFFFFD700).withValues(alpha: 0.5),
+                ),
+              ),
+              Positioned(
+                bottom: -2,
+                left: 54,
+                child: Icon(
+                  Icons.star_rounded,
+                  size: 12,
+                  color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+                ),
+              ),
+
+              // ── Card Main Inner Content ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  children: [
+                    // ── 1. Leading Icon Badge ──
+                    _buildLeadingIcon(isPlayed),
+
+                    const SizedBox(width: 12),
+
+                    // ── 2. Title & Description ──
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Title Text
+                          const Text(
+                            'DAILY PUZZLE',
+                            style: TextStyle(
+                              color: Color(0xFFFFF1D6),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.4,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0xFF1E0B02),
+                                  offset: Offset(0, 1.5),
+                                  blurRadius: 3,
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 3),
+
+                          // Description Text
+                          Text(
+                            isPlayed
+                                ? 'Challenge complete! Next puzzle available tomorrow.'
+                                : 'Solve today\'s mystery color mix to earn 10 coins!',
+                            style: TextStyle(
+                              color: isPlayed
+                                  ? const Color(0xFFD7CCC8).withValues(alpha: 0.85)
+                                  : const Color(0xFFF5DEB3).withValues(alpha: 0.9),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              height: 1.2,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+
+                          const SizedBox(height: 5),
+
+                          // Decorative Sub-Bar with Extra Icons & Info
+                          Row(
+                            children: [
+                              Icon(
+                                isPlayed ? Icons.timer_rounded : Icons.monetization_on_rounded,
+                                size: 13,
+                                color: isPlayed
+                                    ? const Color(0xFFFFD700).withValues(alpha: 0.8)
+                                    : const Color(0xFFFFD700),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                isPlayed ? 'Resets in 14h 32m' : '+10 Coins',
+                                style: TextStyle(
+                                  color: isPlayed
+                                      ? const Color(0xFFFFD700).withValues(alpha: 0.85)
+                                      : const Color(0xFFFFD700),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    // ── 3. Action / Decoration Badge Icon ──
+                    _buildRightActionBadge(isPlayed),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Corner Metallic Stud Rivet ──
+  Widget _buildRivet() {
+    return Container(
+      width: 6,
+      height: 6,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFD700), Color(0xFFB87333)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: const Color(0xFF381806), width: 0.8),
+      ),
+    );
+  }
+
+  // ── Leading Emblem Icon Builder ──
+  Widget _buildLeadingIcon(bool isPlayed) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isPlayed
+                  ? const [Color(0xFF81C784), Color(0xFF388E3C), Color(0xFF1B5E20)]
+                  : const [Color(0xFFFFF5DF), Color(0xFFFFD700), Color(0xFFD4A055)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isPlayed ? const Color(0xFFAED581) : const Color(0xFFFFF8E1),
+              width: 1.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isPlayed
+                    ? const Color(0xFF4CAF50).withValues(alpha: 0.4)
+                    : const Color(0xFFFFD700).withValues(alpha: 0.5),
+                blurRadius: 8,
+                spreadRadius: 1,
+              ),
+              BoxShadow(
+                color: const Color(0xFF1E0B02).withValues(alpha: 0.5),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Icon(
+              isPlayed ? Icons.task_alt_rounded : Icons.extension_rounded,
+              color: isPlayed ? const Color(0xFFFFF1D6) : const Color(0xFF5D4037),
+              size: 26,
+            ),
+          ),
+        ),
+
+        // Corner Star/Check Emblem Overlay
+        Positioned(
+          bottom: 0,
+          right: 0,
+          child: Container(
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFB87333)]),
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF381806), width: 1),
+            ),
+            child: Center(
+              child: Icon(
+                isPlayed ? Icons.check : Icons.auto_awesome,
+                size: 10,
+                color: const Color(0xFF381806),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Right Action / Decoration Badge Builder ──
+  Widget _buildRightActionBadge(bool isPlayed) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isPlayed
+              ? const [Color(0xFF4A3425), Color(0xFF382518)]
+              : const [Color(0xFFFFF5DF), Color(0xFFF5DEB3), Color(0xFFD4A055)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isPlayed
+              ? const Color(0xFF81C784).withValues(alpha: 0.6)
+              : const Color(0xFFFFE082),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isPlayed ? Colors.transparent : const Color(0xFFFFD700).withValues(alpha: 0.3),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: Center(
+        child: Icon(
+          isPlayed ? Icons.lock_rounded : Icons.play_arrow_rounded,
+          color: isPlayed ? const Color(0xFF81C784) : const Color(0xFF3B1E08),
+          size: 22,
+        ),
+      ),
+    );
   }
 }

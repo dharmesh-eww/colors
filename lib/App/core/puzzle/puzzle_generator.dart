@@ -50,12 +50,28 @@ class PuzzleGenerator {
     ),
   };
 
+  /// Formats date into ddMMyy format level number (e.g. 010826 for 1st Aug 2026).
+  static int getDailyPuzzleLevelNumber([DateTime? date]) {
+    final now = date ?? DateTime.now();
+    final day = now.day.toString().padLeft(2, '0');
+    final month = now.month.toString().padLeft(2, '0');
+    final year = (now.year % 100).toString().padLeft(2, '0');
+    return int.parse('$day$month$year');
+  }
+
   /// Generates a random puzzle level tailored specifically for [tier].
   static PuzzleLevel generateRandomPuzzleForDifficulty(
     DifficultyTier tier, {
     int puzzleIndex = 1,
   }) {
-    final int seed = DateTime.now().microsecondsSinceEpoch ^ (puzzleIndex * 31);
+    final int levelNum = (tier == DifficultyTier.dailyPuzzle)
+        ? getDailyPuzzleLevelNumber()
+        : puzzleIndex;
+
+    final int seed = (tier == DifficultyTier.dailyPuzzle)
+        ? (levelNum * 10007 + 7919)
+        : (DateTime.now().microsecondsSinceEpoch ^ (puzzleIndex * 31));
+
     final Random random = Random(seed);
 
     final int requiredColorCount = tier.requiredColors;
@@ -128,7 +144,7 @@ class PuzzleGenerator {
     availableBottles.shuffle(random);
 
     return PuzzleLevel(
-      levelNumber: puzzleIndex,
+      levelNumber: levelNum,
       tier: tier,
       difficultyName: tier.displayName,
       requiredColorCount: requiredColorCount,

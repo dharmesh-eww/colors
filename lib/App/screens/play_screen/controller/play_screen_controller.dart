@@ -147,9 +147,14 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
 
   void loadDifficulty(DifficultyTier tier) {
     _currentDifficultyTier = tier;
+    if (tier == DifficultyTier.dailyPuzzle) {
+      _currentLevelNumber = PuzzleGenerator.getDailyPuzzleLevelNumber();
+    } else {
+      _currentLevelNumber = 0;
+    }
     _currentPuzzle = PuzzleGenerator.generateRandomPuzzleForDifficulty(
       tier,
-      puzzleIndex: _puzzleStreakCount,
+      puzzleIndex: (tier == DifficultyTier.dailyPuzzle) ? _currentLevelNumber : _puzzleStreakCount,
     );
     _targetColor = _currentPuzzle!.targetColor;
 
@@ -304,6 +309,8 @@ class PlayScreenController extends StateController<PlayScreenBinding> {
           } else {
             return 1;
           }
+        case DifficultyTier.dailyPuzzle:
+          return 10; // Daily Puzzle complete -> 10 coins!
       }
     }
   }
