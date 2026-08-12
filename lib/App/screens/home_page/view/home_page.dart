@@ -41,7 +41,7 @@ class _HomeScreenBodyState extends State<_HomeScreenBody> with TickerProviderSta
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 72),
+              const SizedBox(height: 62),
 
               // ── Title ─────────────────────────────────────────────────
               const Text(
