@@ -58,6 +58,7 @@ class _HomeScreenShellState extends State<_HomeScreenShell> {
                     currentIndex: ctrl.currentTabIndex,
                     onTap: (index) => ctrl.changeTab(index),
                   ),
+                  const SizedBox(height: 12),
                 ],
               ),
             ],
@@ -128,52 +129,55 @@ class _WoodenBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: SafeArea(
-        top: false,
-        child: Container(
-          height: 62,
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [
-                Color(0xFF5D3A1A), // Warm oak top
-                Color(0xFF42240E), // Mid chocolate
-                Color(0xFF2C1307), // Dark mahogany base
+    return SafeArea(
+      bottom: true,
+      child: Container(
+        color: Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: SafeArea(
+          top: false,
+          child: Container(
+            height: 62,
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFF5D3A1A), // Warm oak top
+                  Color(0xFF42240E), // Mid chocolate
+                  Color(0xFF2C1307), // Dark mahogany base
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(color: const Color(0xFFD4A055).withValues(alpha: 0.4), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1A0903).withValues(alpha: 0.65),
+                  blurRadius: 14,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 6),
+                ),
+                BoxShadow(
+                  color: const Color(0xFFF5DEB3).withValues(alpha: 0.12),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
               ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
             ),
-            borderRadius: BorderRadius.circular(26),
-            border: Border.all(color: const Color(0xFFD4A055).withValues(alpha: 0.4), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF1A0903).withValues(alpha: 0.65),
-                blurRadius: 14,
-                spreadRadius: 2,
-                offset: const Offset(0, 6),
-              ),
-              BoxShadow(
-                color: const Color(0xFFF5DEB3).withValues(alpha: 0.12),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: _buildNavItem(index: 0, icon: Icons.sports_esports_rounded, label: 'PLAY'),
-              ),
-              Expanded(
-                child: _buildNavItem(index: 1, icon: Icons.grid_view_rounded, label: 'LEVELS'),
-              ),
-              Expanded(
-                child: _buildNavItem(index: 2, icon: Icons.person_rounded, label: 'PROFILE'),
-              ),
-            ],
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildNavItem(index: 0, icon: Icons.sports_esports_rounded, label: 'PLAY'),
+                ),
+                Expanded(
+                  child: _buildNavItem(index: 1, icon: Icons.grid_view_rounded, label: 'LEVELS'),
+                ),
+                Expanded(
+                  child: _buildNavItem(index: 2, icon: Icons.person_rounded, label: 'PROFILE'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
